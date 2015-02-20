@@ -56,7 +56,9 @@ if("${PLATFORM}" MATCHES "Simulator")
 else("${PLATFORM}" MATCHES "Simulator")
 	set(CLANG_TARGET_SPECIFIER "iphoneos-version-min")
 endif("${PLATFORM}" MATCHES "Simulator")
-list(get CMAKE_FIND_ROOT_PATH 0 SYSROOT_PATH)
+
+
+list(GET CMAKE_FIND_ROOT_PATH 0 SYSROOT_PATH)
 set(COMMON_FLAGS "-arch ${CMAKE_SYSTEM_PROCESSOR} -isysroot ${SYSROOT_PATH} -m${CLANG_TARGET_SPECIFIER}=${SDK_VERSION} -DTARGET_OS_IPHONE=1 -D__IOS -fms-extensions")
 set(LINPHONE_BUILDER_TOOLCHAIN_CPPFLAGS "${COMMON_FLAGS} -Dasm=__asm")
 set(LINPHONE_BUILDER_TOOLCHAIN_CFLAGS "-std=c99")
@@ -89,39 +91,18 @@ set(EP_ffmpeg_LINKING_TYPE "--enable-static" "--disable-shared")
 set(EP_gsm_LINKING_TYPE "-DENABLE_STATIC=1")
 
 # linphone
-list(APPEND EP_linphone_CONFIGURE_OPTIONS
-	"--disable-nls"
-	"--with-readline=none"
-	"--enable-gtk_ui=no"
-	"--enable-console_ui=no"
-	"--disable-x11"
-	"--disable-tutorials"
-	"--disable-tools"
-	"--disable-msg-storage"
-	"--disable-video"
-	"--disable-alsa"
-	"--enable-relativeprefix=yes"
-	"--disable-tests"
-)
-set(EP_linphone_LINKING_TYPE "--enable-static" "--disable-shared")
+set(EP_linphone_LINKING_TYPE "-DENABLE_STATIC=YES")
+list(APPEND EP_linphone_CMAKE_OPTIONS "-DENABLE_RELATIVE_PREFIX=YES" "-DENABLE_CONSOLE_UI=NO" "-DENABLE_GTK_UI=NO" "-DENABLE_DOC=NO" "-DENABLE_NOTIFY=NO" "-DENABLE_TOOLS=NO" "-DENABLE_TUTORIALS=NO" "-DENABLE_UNIT_TESTS=NO" "-DENABLE_UPNP=NO")
 
-# mediastreamer2
-list(APPEND EP_ms2_CONFIGURE_OPTIONS
-	"--disable-nls"
-	"--disable-theora"
-	"--disable-sdl"
-	"--disable-x11"
-	"--disable-video"
-	"--disable-alsa"
-	"--enable-relativeprefix=yes"
-)
-set(EP_ms2_LINKING_TYPE "--enable-static" "--disable-shared")
+# ms2
+set(EP_ms2_LINKING_TYPE "-DENABLE_STATIC=YES")
+list(APPEND EP_ms2_CMAKE_OPTIONS "-DENABLE_RELATIVE_PREFIX=YES")
 
 # opus
 set(EP_opus_LINKING_TYPE "--enable-static" "--disable-shared")
 
 # ortp
-set(EP_ortp_LINKING_TYPE "--enable-static" "--disable-shared")
+set(EP_ortp_LINKING_TYPE "-DENABLE_STATIC=YES")
 
 # polarssl
 set(EP_polarssl_LINKING_TYPE "-DUSE_SHARED_POLARSSL_LIBRARY=0")
