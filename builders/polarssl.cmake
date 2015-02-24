@@ -21,11 +21,9 @@
 ############################################################################
 
 set(EP_polarssl_GIT_REPOSITORY "git://git.linphone.org/polarssl.git")
-if(LINPHONE_BUILDER_LATEST)
-	set(EP_polarssl_GIT_TAG "linphone-1.3.4")
-else()
-	set(EP_polarssl_GIT_TAG "25e60b01dbe5595a1591f9d603e260b8652a32b2")
-endif()
+set(EP_polarssl_GIT_TAG_LATEST "linphone-1.3.4")
+set(EP_polarssl_GIT_TAG "760234241f66ebf78cf6909ed358c4492eb7a01d")
+
 set(EP_polarssl_LINKING_TYPE "-DUSE_SHARED_POLARSSL_LIBRARY=1")
 if(MSVC)
 	set(EP_polarssl_EXTRA_LDFLAGS "/SAFESEH:NO")

@@ -66,7 +66,6 @@ if (UNIX)
 		set(LINPHONE_BUILDER_OBJCFLAGS "-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET} -arch ${CMAKE_OSX_ARCHITECTURES}")
 		set(LINPHONE_BUILDER_LDFLAGS "-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET} -arch ${CMAKE_OSX_ARCHITECTURES}")
 	else()
-		set(BUILD_V4L "yes")
 		set(LINPHONE_BUILDER_LDFLAGS "-Wl,-Bsymbolic -fPIC")
 	endif()
 endif()
@@ -108,6 +107,19 @@ if(UNIX AND NOT APPLE)
 	list(APPEND EP_ms2_CMAKE_OPTIONS "-DENABLE_ALSA=YES" "-DENABLE_PULSEAUDIO=NO" "-DENABLE_OSS=NO" "-DENABLE_GLX=NO" "-DENABLE_X11=YES" "-DENABLE_XV=YES")
 endif()
 
+# msopenh264
+set(EP_msopenh264_LINKING_TYPE "-DENABLE_STATIC=YES")
+
+# openh264
+set(EP_openh264_LINKING_TYPE "-static")
+if (APPLE)
+	if("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "x86_64")
+		set(EP_openh264_ADDITIONAL_OPTIONS "ARCH=\"x86_64\"")
+	else()
+		set(EP_openh264_ADDITIONAL_OPTIONS "ARCH=\"x86\"")
+	endif()
+endif()
+
 # opus
 if(NOT MSVC)
 	# TODO: Also build statically on windows
@@ -124,7 +136,7 @@ set(EP_polarssl_LINKING_TYPE "-DUSE_SHARED_POLARSSL_LIBRARY=NO")
 set(EP_speex_LINKING_TYPE "-DENABLE_STATIC=YES")
 
 # sqlite3
-set(EP_sqlite3_LINKING_TYPE "-DENABLE_STATIC=1")
+set(EP_sqlite3_LINKING_TYPE "-DENABLE_STATIC=YES")
 
 # srtp
 set(EP_srtp_LINKING_TYPE "-DENABLE_STATIC=YES")
@@ -136,19 +148,22 @@ set(EP_v4l_LINKING_TYPE "--enable-static" "--disable-shared" "--with-pic")
 set(EP_vpx_LINKING_TYPE "--enable-static" "--disable-shared" "--enable-pic")
 
 # xml2
-set(EP_xml2_LINKING_TYPE "--enable-static" "--disable-shared" "--with-pic")
+set(EP_xml2_LINKING_TYPE "-DENABLE_STATIC=YES")
 
 
 # Python module
+if(NOT PACKAGE_NAME)
+	set(PACKAGE_NAME "linphone")
+endif()
 linphone_builder_apply_flags()
 linphone_builder_set_ep_directories(pylinphone)
 linphone_builder_expand_external_project_vars()
 ExternalProject_Add(TARGET_pylinphone
-	DEPENDS TARGET_linphone
+	DEPENDS TARGET_linphone_builder
 	TMP_DIR ${ep_tmp}
 	BINARY_DIR ${ep_build}
 	DOWNLOAD_COMMAND ""
 	PATCH_COMMAND "${CMAKE_COMMAND}" "-E" "copy_directory" "${CMAKE_CURRENT_LIST_DIR}/python" "<SOURCE_DIR>"
 	CMAKE_GENERATOR ${CMAKE_GENERATOR}
-	CMAKE_ARGS ${LINPHONE_BUILDER_EP_ARGS}
+	CMAKE_ARGS ${LINPHONE_BUILDER_EP_ARGS} -DPACKAGE_NAME=${PACKAGE_NAME} -DENABLE_FFMPEG:BOOL=${ENABLE_FFMPEG} -DENABLE_OPENH264:BOOL=${ENABLE_OPENH264}
 )

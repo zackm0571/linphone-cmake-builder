@@ -21,18 +21,15 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 2.8.12)
-project(PYLINPHONE C) # Dummy project
+project(PYLINPHONE C CXX) # Dummy project
 
 if(APPLE)
 	set(PLATFORM_ARCH_NAME "${CMAKE_OSX_ARCHITECTURES}")
 else()
-	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		set(PLATFORM_ARCH_NAME "x86_64")
-	else()
-		set(PLATFORM_ARCH_NAME "i386")
-	endif()
+	set(PLATFORM_ARCH_NAME "${CMAKE_HOST_SYSTEM_PROCESSOR}")
 endif()
 
+set(Python_ADDITIONAL_VERSIONS 2.7)
 find_package(PythonInterp REQUIRED)
 find_package(PythonLibs 2.7 REQUIRED)
 find_package(Git)
@@ -85,23 +82,28 @@ if(WIN32)
 else()
 	set(PACKAGES_TO_BUILD "zip" "wheel")
 	set(PY_MODULE_EXT ".so")
+	set(LINPHONE_DYNAMIC_LIBRARIES_TO_INSTALL )
 	if(APPLE)
-		set(LINPHONE_DYNAMIC_LIBRARIES_TO_INSTALL
-			"${CMAKE_INSTALL_PREFIX}/lib/libavcodec.53.61.100.dylib"
-			"${CMAKE_INSTALL_PREFIX}/lib/libavutil.51.35.100.dylib"
-			"${CMAKE_INSTALL_PREFIX}/lib/libswscale.2.1.100.dylib"
-		)
+		if(ENABLE_FFMPEG)
+			list(APPEND LINPHONE_DYNAMIC_LIBRARIES_TO_INSTALL
+				"${CMAKE_INSTALL_PREFIX}/lib/libavcodec.53.61.100.dylib"
+				"${CMAKE_INSTALL_PREFIX}/lib/libavutil.51.35.100.dylib"
+				"${CMAKE_INSTALL_PREFIX}/lib/libswscale.2.1.100.dylib"
+			)
+		endif()
 	else()
-		set(LINPHONE_DYNAMIC_LIBRARIES_TO_INSTALL
-			"${CMAKE_INSTALL_PREFIX}/lib/libavcodec.so.53.61.100"
-			"${CMAKE_INSTALL_PREFIX}/lib/libavutil.so.51.35.100"
-			"${CMAKE_INSTALL_PREFIX}/lib/libswscale.so.2.1.100"
-		)
+		if(ENABLE_FFMPEG)
+			list(APPEND LINPHONE_DYNAMIC_LIBRARIES_TO_INSTALL
+				"${CMAKE_INSTALL_PREFIX}/lib/libavcodec.so.53.61.100"
+				"${CMAKE_INSTALL_PREFIX}/lib/libavutil.so.51.35.100"
+				"${CMAKE_INSTALL_PREFIX}/lib/libswscale.so.2.1.100"
+			)
+		endif()
 	endif()
 endif()
 
 if(UNIX)
-	find_program(LORDER_EXECUTABLE lorder)
+	find_program(LORDER_EXECUTABLE lorder HINTS "${CMAKE_CURRENT_SOURCE_DIR}")
 	if(NOT LORDER_EXECUTABLE)
 		message(FATAL_ERROR "lorder executable is needed.")
 	endif()
@@ -115,8 +117,15 @@ if(UNIX)
 endif()
 
 add_library(pylinphone MODULE "${SOURCE_FILENAME}")
+if(ENABLE_OPENH264)
+	find_library(MSOPENH264_LIBRARY msopenh264 HINTS "${CMAKE_INSTALL_PREFIX}/lib/mediastreamer/plugins")
+	find_library(OPENH264_LIBRARY openh264)
+	target_compile_definitions(pylinphone PRIVATE "ENABLE_OPENH264=1")
+	target_link_libraries(pylinphone ${MSOPENH264_LIBRARY} ${OPENH264_LIBRARY})
+endif()
 target_compile_options(pylinphone PUBLIC ${LINPHONE_CPPFLAGS})
 target_include_directories(pylinphone PUBLIC ${LINPHONE_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS} PRIVATE "${LINPHONE_SOURCE_DIR}/coreapi" "${LINPHONE_SOURCE_DIR}/include")
+set_target_properties(pylinphone PROPERTIES LINKER_LANGUAGE CXX)
 set(PYLINPHONE_LINK_LIBRARIES ${LINPHONE_LIBRARIES})
 if(WIN32)
 	find_library(GCC_LIBRARIES gcc)
@@ -142,7 +151,7 @@ if(UNIX)
 endif()
 foreach(PACKAGE_TO_BUILD ${PACKAGES_TO_BUILD})
 	add_custom_command(TARGET pylinphone POST_BUILD
-		COMMAND "${CMAKE_COMMAND}" "-DLINPHONE_VERSION=${LINPHONE_VERSION}" "-DLINPHONE_GIT_REVISION=${LINPHONE_GIT_REVISION}"
+		COMMAND "${CMAKE_COMMAND}" "-DPACKAGE_NAME=${PACKAGE_NAME}" "-DLINPHONE_VERSION=${LINPHONE_VERSION}" "-DLINPHONE_GIT_REVISION=${LINPHONE_GIT_REVISION}"
 			"-DLINPHONE_PYTHON_MODULE=$<TARGET_FILE:pylinphone>" "-DLINPHONE_RESOURCES_PREFIX=${CMAKE_INSTALL_PREFIX}"
 			"-DLINPHONE_DYNAMIC_LIBRARIES_TO_INSTALL=\"${LINPHONE_DYNAMIC_LIBRARIES_TO_INSTALL}\"" "-DPACKAGE_TYPE=${PACKAGE_TO_BUILD}"
 			"-DINPUT_DIR=${CMAKE_CURRENT_SOURCE_DIR}" "-DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}" "-DLINPHONE_SOURCE_DIR=${LINPHONE_SOURCE_DIR}"
@@ -158,77 +167,85 @@ endforeach()
 if(WIN32)
 
 # Generate the installer
-set(EXE_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_exe/linphone/dist/linphone-${LINPHONE_GIT_REVISION}.win32.exe")
+set(EXE_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_exe/linphone/dist/${PACKAGE_NAME}-${LINPHONE_GIT_REVISION}.win32.exe")
 add_custom_command(OUTPUT "${EXE_FILENAME}"
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/build_exe/linphone/setup.py" "bdist_wininst"
 	DEPENDS pylinphone
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/build_exe/linphone"
 )
 add_custom_target(pylinphone_exe ALL DEPENDS "${EXE_FILENAME}")
-install(FILES ${EXE_FILENAME} DESTINATION "." RENAME "linphone-${LINPHONE_GIT_REVISION}.win32-py${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.exe")
+install(FILES ${EXE_FILENAME} DESTINATION "." RENAME "${PACKAGE_NAME}-${LINPHONE_GIT_REVISION}.win32-py${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.exe")
 
 # Generate the msi
-set(MSI_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_msi/linphone/dist/linphone-${LINPHONE_VERSION}.win32.msi")
+set(MSI_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_msi/linphone/dist/${PACKAGE_NAME}-${LINPHONE_VERSION}.win32.msi")
 add_custom_command(OUTPUT "${MSI_FILENAME}"
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/build_msi/linphone/setup.py" "bdist_msi"
 	DEPENDS pylinphone
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/build_msi/linphone"
 )
 add_custom_target(pylinphone_msi ALL DEPENDS "${MSI_FILENAME}")
-install(FILES ${MSI_FILENAME} DESTINATION "." RENAME "linphone-${LINPHONE_GIT_REVISION}.win32-py${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.msi")
+install(FILES ${MSI_FILENAME} DESTINATION "." RENAME "${PACKAGE_NAME}-${LINPHONE_GIT_REVISION}.win32-py${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.msi")
 
 # Generate the zip
-set(ZIP_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_zip/linphone/dist/linphone-${LINPHONE_GIT_REVISION}.win32.zip")
+set(ZIP_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_zip/linphone/dist/${PACKAGE_NAME}-${LINPHONE_GIT_REVISION}.win32.zip")
 add_custom_command(OUTPUT "${ZIP_FILENAME}"
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/build_zip/linphone/setup.py" "bdist" "--format=zip"
 	DEPENDS pylinphone
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/build_zip/linphone"
 )
 add_custom_target(pylinphone_zip ALL DEPENDS "${ZIP_FILENAME}")
-install(FILES ${ZIP_FILENAME} DESTINATION "." RENAME "linphone-${LINPHONE_GIT_REVISION}.win32-py${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.zip")
+install(FILES ${ZIP_FILENAME} DESTINATION "." RENAME "${PACKAGE_NAME}-${LINPHONE_GIT_REVISION}.win32-py${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.zip")
 
 # Generate the wheel package
 string(REPLACE "-" "_" LINPHONE_UNDERSCORE_GIT_REVISION ${LINPHONE_GIT_REVISION})
-set(WHEEL_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_wheel/linphone/dist/linphone-${LINPHONE_UNDERSCORE_GIT_REVISION}-py2-none-any.whl")
+set(WHEEL_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_wheel/linphone/dist/${PACKAGE_NAME}-${LINPHONE_UNDERSCORE_GIT_REVISION}-py2-none-any.whl")
 add_custom_command(OUTPUT "${WHEEL_FILENAME}"
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/build_wheel/linphone/setup.py" "bdist_wheel"
 	DEPENDS pylinphone
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/build_wheel/linphone"
 )
 add_custom_target(pylinphone_wheel ALL DEPENDS "${WHEEL_FILENAME}")
-install(FILES ${WHEEL_FILENAME} DESTINATION "." RENAME "linphone-${LINPHONE_UNDERSCORE_GIT_REVISION}-cp27-none-win32.whl")
+install(FILES ${WHEEL_FILENAME} DESTINATION "." RENAME "${PACKAGE_NAME}-${LINPHONE_UNDERSCORE_GIT_REVISION}-cp27-none-win32.whl")
 
 endif()
 
 if(UNIX)
 
-if(APPLE)
-	set(PLATFORM_OS "macosx-${CMAKE_OSX_DEPLOYMENT_TARGET}")
+if(CMAKE_CROSSCOMPILING)
+	string(TOLOWER "${CMAKE_SYSTEM_NAME}" PLATFORM_OS)
+	set(PLATFORM_TAG "${PLATFORM_OS}-${CMAKE_SYSTEM_PROCESSOR}")
+	set(UNDERSCORE_PLATFORM_TAG "any")
 else()
-	set(PLATFORM_OS "linux")
+	if(APPLE)
+		set(PLATFORM_OS "macosx-${CMAKE_OSX_DEPLOYMENT_TARGET}")
+	else()
+		set(PLATFORM_OS "linux")
+	endif()
+	string(REPLACE "-" "_" UNDERSCORE_PLATFORM_OS ${PLATFORM_OS})
+	string(REPLACE "." "_" UNDERSCORE_PLATFORM_OS ${UNDERSCORE_PLATFORM_OS})
+	set(PLATFORM_TAG "${PLATFORM_OS}-${PLATFORM_ARCH_NAME}")
+	set(UNDERSCORE_PLATFORM_TAG "${UNDERSCORE_PLATFORM_OS}_${PLATFORM_ARCH_NAME}")
 endif()
-string(REPLACE "-" "_" UNDERSCORE_PLATFORM_OS ${PLATFORM_OS})
-string(REPLACE "." "_" UNDERSCORE_PLATFORM_OS ${UNDERSCORE_PLATFORM_OS})
 
 # Generate the zip
-set(ZIP_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_zip/linphone/dist/linphone-${LINPHONE_GIT_REVISION}.${PLATFORM_OS}-${PLATFORM_ARCH_NAME}.zip")
+set(ZIP_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_zip/linphone/dist/${PACKAGE_NAME}-${LINPHONE_GIT_REVISION}.${PLATFORM_OS}-${PLATFORM_ARCH_NAME}.zip")
 add_custom_command(OUTPUT "${ZIP_FILENAME}"
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/build_zip/linphone/setup.py" "bdist" "--format=zip"
 	DEPENDS pylinphone
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/build_zip/linphone"
 )
 add_custom_target(pylinphone_zip ALL DEPENDS "${ZIP_FILENAME}")
-install(FILES ${ZIP_FILENAME} DESTINATION "." RENAME "linphone-${LINPHONE_GIT_REVISION}.${PLATFORM_OS}-${PLATFORM_ARCH_NAME}-py${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.zip")
+install(FILES ${ZIP_FILENAME} DESTINATION "." RENAME "${PACKAGE_NAME}-${LINPHONE_GIT_REVISION}.${PLATFORM_TAG}-py${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.zip")
 
 # Generate the wheel package
 string(REPLACE "-" "_" LINPHONE_UNDERSCORE_GIT_REVISION ${LINPHONE_GIT_REVISION})
-set(WHEEL_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_wheel/linphone/dist/linphone-${LINPHONE_UNDERSCORE_GIT_REVISION}-py2-none-any.whl")
+set(WHEEL_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_wheel/linphone/dist/${PACKAGE_NAME}-${LINPHONE_UNDERSCORE_GIT_REVISION}-py2-none-any.whl")
 add_custom_command(OUTPUT "${WHEEL_FILENAME}"
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/build_wheel/linphone/setup.py" "bdist_wheel"
 	DEPENDS pylinphone
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/build_wheel/linphone"
 )
 add_custom_target(pylinphone_wheel ALL DEPENDS "${WHEEL_FILENAME}")
-install(FILES ${WHEEL_FILENAME} DESTINATION "." RENAME "linphone-${LINPHONE_UNDERSCORE_GIT_REVISION}-cp27-none-${UNDERSCORE_PLATFORM_OS}_${PLATFORM_ARCH_NAME}.whl")
+install(FILES ${WHEEL_FILENAME} DESTINATION "." RENAME "${PACKAGE_NAME}-${LINPHONE_UNDERSCORE_GIT_REVISION}-cp27-none-${UNDERSCORE_PLATFORM_TAG}.whl")
 
 endif()

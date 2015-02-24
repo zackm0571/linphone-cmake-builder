@@ -21,11 +21,9 @@
 ############################################################################
 
 set(EP_tunnel_GIT_REPOSITORY "gitosis@git.linphone.org:tunnel.git") # Private repository
-if(LINPHONE_BUILDER_LATEST)
-	set(EP_tunnel_GIT_TAG "master")
-else()
-	set(EP_tunnel_GIT_TAG "d0af683ace8a2ea404ac9017a84261d68f739cbd")
-endif()
+set(EP_tunnel_GIT_TAG_LATEST "master")
+set(EP_tunnel_GIT_TAG "1182be7fdefcf9717451fc2a8f67f645c5e4d2c9")
+
 set(EP_tunnel_LINKING_TYPE "-DENABLE_STATIC=0")
 set(EP_tunnel_CMAKE_OPTIONS "-DENABLE_SERVERS=0")
 set(EP_tunnel_DEPENDENCIES EP_polarssl)

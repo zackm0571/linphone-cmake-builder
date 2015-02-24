@@ -21,11 +21,9 @@
 ############################################################################
 
 set(EP_msx264_GIT_REPOSITORY "git://git.linphone.org/msx264.git")
-if(LINPHONE_BUILDER_LATEST)
-	set(EP_msx264_GIT_TAG "master")
-else()
-	set(EP_msx264_GIT_TAG "6532dd845c59631a9149e9146ba5cf9426db906b")
-endif()
+set(EP_msx264_GIT_TAG_LATEST "master")
+set(EP_msx264_GIT_TAG "dff7452939033d8749c4e9d445a64172f4bb7a3d")
+
 set(EP_msx264_BUILD_METHOD "autotools")
 set(EP_msx264_USE_AUTOGEN "yes")
 set(EP_msx264_CROSS_COMPILATION_OPTIONS

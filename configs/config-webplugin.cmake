@@ -62,7 +62,6 @@ if (UNIX)
 		set(LINPHONE_BUILDER_OBJCFLAGS "-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET} -arch ${CMAKE_OSX_ARCHITECTURES}")
 		set(LINPHONE_BUILDER_LDFLAGS "-mmacosx-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET} -arch ${CMAKE_OSX_ARCHITECTURES}")
 	else()
-		set(BUILD_V4L "yes")
 		set(LINPHONE_BUILDER_LDFLAGS "-Wl,-Bsymbolic")
 	endif()
 endif()
@@ -77,6 +76,9 @@ include(builders/CMakeLists.txt)
 
 # belle-sip
 list(APPEND EP_bellesip_CMAKE_OPTIONS "-DENABLE_SERVER_SOCKETS=0")
+
+# gsm
+set(EP_gsm_LINKING_TYPE "-DENABLE_STATIC=YES")
 
 # linphone
 list(APPEND EP_linphone_CMAKE_OPTIONS "-DENABLE_RELATIVE_PREFIX=YES" "-DENABLE_CONSOLE_UI=NO" "-DENABLE_GTK_UI=NO" "-DENABLE_NOTIFY=NO" "-DENABLE_TOOLS=YES" "-DENABLE_TUTORIALS=NO" "-DENABLE_UNIT_TESTS=NO" "-DENABLE_UPNP=NO")
@@ -112,7 +114,7 @@ if(NOT MSVC)
 endif()
 
 # sqlite3
-set(EP_sqlite3_LINKING_TYPE "-DENABLE_STATIC=1")
+set(EP_sqlite3_LINKING_TYPE "-DENABLE_STATIC=YES")
 
 # v4l
 set(EP_v4l_LINKING_TYPE "--enable-static" "--disable-shared" "--with-pic")
@@ -124,4 +126,4 @@ set(EP_voamrwbenc_LINKING_TYPE "--enable-static" "--disable-shared" "--with-pic"
 set(EP_vpx_LINKING_TYPE "--enable-static" "--disable-shared" "--enable-pic")
 
 # xml2
-set(EP_xml2_LINKING_TYPE "--enable-static" "--disable-shared" "--with-pic")
+set(EP_xml2_LINKING_TYPE "-DENABLE_STATIC=YES")

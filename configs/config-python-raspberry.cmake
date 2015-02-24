@@ -1,5 +1,5 @@
 ############################################################################
-# postinstall.cmake
+# config-python-raspberry.cmake
 # Copyright (C) 2014  Belledonne Communications, Grenoble France
 #
 ############################################################################
@@ -20,4 +20,25 @@
 #
 ############################################################################
 
-execute_process(COMMAND "${CMAKE_COMMAND}" "-E" "copy" "${SOURCE_DIR}/builders/xml2/FindXML2.cmake" "${INSTALL_PREFIX}/share/cmake/Modules/FindXML2.cmake")
+get_filename_component(COMPILER_NAME ${CMAKE_C_COMPILER} NAME)
+string(REGEX REPLACE "-gcc$" "" LINPHONE_BUILDER_HOST ${COMPILER_NAME})
+unset(COMPILER_NAME)
+
+set(PACKAGE_NAME "linphone4raspberry")
+
+include("configs/config-python.cmake")
+
+# ffmpeg
+set(EP_ffmpeg_CROSS_COMPILATION_OPTIONS
+	"--prefix=${CMAKE_INSTALL_PREFIX}"
+	"--enable-cross-compile"
+	"--cross-prefix=arm-linux-gnueabihf-"
+	"--arch=arm"
+	"--target-os=linux"
+)
+
+# vpx
+set(EP_vpx_CROSS_COMPILATION_OPTIONS
+	"--prefix=${CMAKE_INSTALL_PREFIX}"
+	"--target=armv6-linux-gcc"
+)

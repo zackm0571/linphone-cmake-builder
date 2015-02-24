@@ -26,7 +26,7 @@ PWD=$(shell pwd)
 	build-desktop clean-desktop \
 	build-flexisip clean-flexisip \
 	build-flexisip-rpm clean-flexisip-rpm \
-	build-python clean-python \
+	build-python clean-python build-python-raspberry \
 	build-bb10-i486 build-bb10-arm build-bb10 clean-bb10-i486 clean-bb10-arm clean-bb10 help-bb10 generate-bb10-sdk \
 	build-ios-i386 build-ios-armv7 build-ios-armv7s build-ios clean-ios-i386 clean-ios-armv7 clean-ios-armv7s clean-ios help-ios generate-ios-sdk \
 	veryclean
@@ -43,7 +43,7 @@ clean-desktop:
 	rm -rf WORK/Build-desktop && \
 	rm -rf WORK/tmp-desktop
 
-build-flexisip:
+prepare-flexisip:
 	export ODBC_PATH=../../OUTPUT
 	mkdir -p WORK/cmake-flexisip && \
 	cd WORK/cmake-flexisip && \
@@ -51,14 +51,13 @@ build-flexisip:
 		-DLINPHONE_BUILDER_TARGET=flexisip \
 		-DCMAKE_PREFIX_PATH=$(PWD)/OUTPUT\
 		-DCMAKE_INSTALL_PREFIX=$(PWD)/OUTPUT \
-		 $(filter -D%,$(MAKEFLAGS)) && \
-	make
+		$(filter -D%,$(MAKEFLAGS))
 
 clean-flexisip:
 	rm -rf WORK/tmp-flexisip && \
 	rm -rf WORK/Build-flexisip
 
-build-flexisip-rpm:
+prepare-flexisip-rpm:
 	export ODBC_PATH=../../OUTPUT
 	mkdir -p WORK/cmake-flexisip-rpm && \
 	cd WORK/cmake-flexisip-rpm && \
@@ -66,9 +65,9 @@ build-flexisip-rpm:
 		-DLINPHONE_BUILDER_TARGET=flexisip \
 		-DCMAKE_PREFIX_PATH=$(PWD)/OUTPUT\
 		-DCMAKE_INSTALL_PREFIX=$(PWD)/OUTPUT \
-		 $(filter -D%,$(MAKEFLAGS)) && \
-	make
-#	make
+		$(filter -D%,$(MAKEFLAGS))
+
+
 
 clean-flexisip-rpm:
 	rm -rf WORK/tmp-flexisip-rpm
@@ -80,6 +79,15 @@ build-python:
 	mkdir -p WORK/cmake-python && \
 	cd WORK/cmake-python && \
 	cmake ../.. -DLINPHONE_BUILDER_CONFIG_FILE=configs/config-python.cmake -DCMAKE_PREFIX_PATH=$(PWD)/OUTPUT -DCMAKE_INSTALL_PREFIX=$(PWD)/OUTPUT $(filter -D%,$(MAKEFLAGS)) && \
+	make
+
+build-python-raspberry:
+	mkdir -p WORK/cmake-python-raspberry && \
+	cd WORK/cmake-python-raspberry && \
+	cmake ../.. -DCMAKE_TOOLCHAIN_FILE=toolchains/toolchain-raspberry.cmake \
+		-DLINPHONE_BUILDER_CONFIG_FILE=configs/config-python-raspberry.cmake \
+		-DCMAKE_PREFIX_PATH=$(PWD)/OUTPUT -DCMAKE_INSTALL_PREFIX=$(PWD)/OUTPUT \
+		$(filter -D%,$(MAKEFLAGS)) && \
 	make
 
 clean-python:
@@ -230,3 +238,8 @@ generate-ios-sdk: build-ios
 veryclean:
 	rm -rf WORK && \
 	rm -rf OUTPUT
+
+check-latest:
+	mkdir -p WORK && \
+	cd WORK && \
+	cmake .. -DLINPHONE_BUILDER_CHECK_LATEST=Yes
