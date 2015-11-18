@@ -55,23 +55,33 @@ if(APPLE)
 		-change ${LINPHONE_OUTPUT_DIR}/lib/libswscale.2.1.100.dylib @rpath/libswscale.2.1.100.dylib
 		-change ${LINPHONE_OUTPUT_DIR}/lib/libswresample.0.6.100.dylib @rpath/libswresample.0.6.100.dylib
 		-change ${LINPHONE_OUTPUT_DIR}/lib/libopenh264.0.dylib @rpath/libopenh264.0.dylib
-		-change /opt/local/lib/libintl.8.dylib @rpath/libintl.8.dylib
-		-change /opt/local/lib/libiconv.2.dylib @rpath/libiconv.2.dylib
+		-change /usr/local/opt/gettext/lib/libintl.8.dylib @rpath/libintl.8.dylib
+		-change /usr/local/opt/libiconv/lib/libiconv.2.dylib @rpath/libiconv.2.dylib
 		-change /lib/libopenh264.0.dylib @rpath/libopenh264.0.dylib
+		-change ${LINPHONE_OUTPUT_DIR}/lib/libopenh264.0.dylib @rpath/libopenh264.0.dylib
 	)
 	set(RPATH_LIBS_TO_MODIFY
 		libavcodec.53.61.100.dylib
-		libavutil.51.35.100.dylib
-		liblinphone.7.dylib
-		libmediastreamer_voip.5.dylib
-		libswresample.0.6.100.dylib
-		libswscale.2.1.100.dylib
+		libavutil.dylib
+		liblinphone.8.dylib
+		libmediastreamer_voip.dylib
+		libswresample.dylib
+		libswscale.dylib
+		libopenh264.dylib
+		libiconv.2.dylib
+		libintl.8.dylib
 		mediastreamer/plugins/libmsamr.dylib
 		mediastreamer/plugins/libmsbcg729.dylib
 		mediastreamer/plugins/libmsilbc.dylib
 		mediastreamer/plugins/libmsopenh264.dylib
 		mediastreamer/plugins/libmssilk.dylib
 		mediastreamer/plugins/libmswebrtc.dylib
+	)
+
+	file(COPY /usr/local/opt/gettext/lib/libintl.8.dylib /usr/local/opt/libiconv/lib/libiconv.2.dylib DESTINATION ${LINPHONE_SDK_TMP}/lib FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE)
+	execute_process(
+		COMMAND install_name_tool -id @rpath/libintl.8.dylib ${LINPHONE_SDK_TMP}/lib/libintl.8.dylib
+		COMMAND install_name_tool -id @rpath/libiconv.2.dylib ${LINPHONE_SDK_TMP}/lib/libiconv.2.dylib
 	)
 	foreach(LIB_TO_CHANGE ${RPATH_LIBS_TO_MODIFY})
 		execute_process(
@@ -80,11 +90,6 @@ if(APPLE)
 			COMMAND install_name_tool -delete_rpath ${LINPHONE_OUTPUT_DIR}/lib ${LINPHONE_SDK_TMP}/lib/${LIB_TO_CHANGE}
 		)
 	endforeach()
-	file(COPY /opt/local/lib/libintl.8.dylib /opt/local/lib/libintl.dylib /opt/local/lib/libiconv.dylib /opt/local/lib/libiconv.2.dylib DESTINATION ${LINPHONE_SDK_TMP}/lib)
-	execute_process(
-		COMMAND install_name_tool -id @rpath/libintl.8.dylib -change /opt/local/lib/libiconv.2.dylib @rpath/libiconv.2.dylib ${LINPHONE_SDK_TMP}/lib/libintl.8.dylib
-		COMMAND install_name_tool -id @rpath/libiconv.2.dylib ${LINPHONE_SDK_TMP}/lib/libiconv.2.dylib
-	)
 	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/README.openh264.txt DESTINATION ${LINPHONE_SDK_TMP})
 endif()
 
