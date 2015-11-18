@@ -22,7 +22,7 @@
 
 set(EP_bellesip_GIT_REPOSITORY "git://git.linphone.org/belle-sip.git" CACHE STRING "bellesip repository URL")
 set(EP_bellesip_GIT_TAG_LATEST "master" CACHE STRING "bellesip tag to use when compiling latest version")
-set(EP_bellesip_GIT_TAG "fbb27d34f9134812876da5bccee0bf5b80aa5f77" CACHE STRING "bellesip tag to use")
+set(EP_bellesip_GIT_TAG "1.4.2" CACHE STRING "bellesip tag to use")
 set(EP_bellesip_EXTERNAL_SOURCE_PATHS "belle-sip")
 set(EP_bellesip_GROUPABLE YES)
 
@@ -36,6 +36,12 @@ if(MSVC)
 endif()
 
 set(EP_bellesip_CMAKE_OPTIONS "-DENABLE_RTP_MAP_ALWAYS_IN_SDP=${ENABLE_RTP_MAP_ALWAYS_IN_SDP}")
+
+# TODO: Activate strict compilation options on IOS
+if(IOS)
+	list(APPEND EP_bellesip_CMAKE_OPTIONS "-DENABLE_STRICT=NO")
+endif()
+
 list(APPEND EP_bellesip_CMAKE_OPTIONS "-DENABLE_TUNNEL=${ENABLE_TUNNEL}")
 if(ENABLE_TUNNEL)
 	list(APPEND EP_bellesip_DEPENDENCIES EP_tunnel)

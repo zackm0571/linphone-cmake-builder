@@ -22,7 +22,7 @@
 
 set(EP_linphone_GIT_REPOSITORY "git://git.linphone.org/linphone.git" CACHE STRING "linphone repository URL")
 set(EP_linphone_GIT_TAG_LATEST "master" CACHE STRING "linphone tag to use when compiling latest version")
-set(EP_linphone_GIT_TAG "5abd00497dde9f0b9860ad92b695b136b1909918" CACHE STRING "linphone tag to use")
+set(EP_linphone_GIT_TAG "3.9.0" CACHE STRING "linphone tag to use")
 set(EP_linphone_EXTERNAL_SOURCE_PATHS "linphone")
 set(EP_linphone_GROUPABLE YES)
 
@@ -46,6 +46,12 @@ set(EP_linphone_CMAKE_OPTIONS
 	"-DENABLE_NLS=${ENABLE_NLS}"
 	"-DENABLE_LIME=YES"
 )
+
+# TODO: Activate strict compilation options on IOS
+if(IOS)
+	list(APPEND EP_linphone_CMAKE_OPTIONS "-DENABLE_STRICT=NO")
+endif()
+
 list(APPEND EP_linphone_CMAKE_OPTIONS "-DENABLE_TUNNEL=${ENABLE_TUNNEL}")
 if(ENABLE_TUNNEL)
 	list(APPEND EP_linphone_DEPENDENCIES EP_tunnel)

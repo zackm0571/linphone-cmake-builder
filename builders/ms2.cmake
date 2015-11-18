@@ -22,7 +22,7 @@
 
 set(EP_ms2_GIT_REPOSITORY "git://git.linphone.org/mediastreamer2.git" CACHE STRING "ms2 repository URL")
 set(EP_ms2_GIT_TAG_LATEST "master" CACHE STRING "ms2 tag to use when compiling latest version")
-set(EP_ms2_GIT_TAG "1be89b1183a9085b63a0ca50e153766ab0b4e891" CACHE STRING "ms2 tag to use")
+set(EP_ms2_GIT_TAG "2.12.0" CACHE STRING "ms2 tag to use")
 set(EP_ms2_EXTERNAL_SOURCE_PATHS "mediastreamer2" "linphone/mediastreamer2")
 set(EP_ms2_GROUPABLE YES)
 
@@ -38,6 +38,11 @@ set(EP_ms2_CMAKE_OPTIONS
 	"-DENABLE_DEBUG_LOGS=${ENABLE_DEBUG_LOGS}"
 	"-DENABLE_PCAP=${ENABLE_PCAP}"
 )
+
+# TODO: Activate strict compilation options on IOS
+if(IOS)
+	list(APPEND EP_ms2_CMAKE_OPTIONS "-DENABLE_STRICT=NO")
+endif()
 
 list(APPEND EP_ms2_CMAKE_OPTIONS "-DENABLE_GSM=${ENABLE_GSM}")
 if(ENABLE_GSM AND LINPHONE_BUILDER_BUILD_DEPENDENCIES)
