@@ -56,7 +56,6 @@ if(APPLE)
 		-change ${LINPHONE_OUTPUT_DIR}/lib/libswresample.0.6.100.dylib @rpath/libswresample.0.6.100.dylib
 		-change ${LINPHONE_OUTPUT_DIR}/lib/libopenh264.0.dylib @rpath/libopenh264.0.dylib
 		-change /usr/local/opt/gettext/lib/libintl.8.dylib @rpath/libintl.8.dylib
-		-change /usr/local/opt/libiconv/lib/libiconv.2.dylib @rpath/libiconv.2.dylib
 		-change /lib/libopenh264.0.dylib @rpath/libopenh264.0.dylib
 		-change ${LINPHONE_OUTPUT_DIR}/lib/libopenh264.0.dylib @rpath/libopenh264.0.dylib
 	)
@@ -78,10 +77,9 @@ if(APPLE)
 		mediastreamer/plugins/libmswebrtc.dylib
 	)
 
-	file(COPY /usr/local/opt/gettext/lib/libintl.8.dylib /usr/local/opt/libiconv/lib/libiconv.2.dylib DESTINATION ${LINPHONE_SDK_TMP}/lib FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE)
+	file(COPY /usr/local/opt/gettext/lib/libintl.8.dylib DESTINATION ${LINPHONE_SDK_TMP}/lib FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE)
 	execute_process(
 		COMMAND install_name_tool -id @rpath/libintl.8.dylib ${LINPHONE_SDK_TMP}/lib/libintl.8.dylib
-		COMMAND install_name_tool -id @rpath/libiconv.2.dylib ${LINPHONE_SDK_TMP}/lib/libiconv.2.dylib
 	)
 	foreach(LIB_TO_CHANGE ${RPATH_LIBS_TO_MODIFY})
 		execute_process(
