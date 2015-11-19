@@ -62,12 +62,12 @@ if(APPLE)
 	)
 	set(RPATH_LIBS_TO_MODIFY
 		libavcodec.53.61.100.dylib
-		libavutil.dylib
+		libavutil.51.35.100.dylib
 		liblinphone.8.dylib
-		libmediastreamer_voip.dylib
-		libswresample.dylib
-		libswscale.dylib
-		libopenh264.dylib
+		libmediastreamer_voip.6.dylib
+		libswresample.0.6.100.dylib
+		libswscale.2.1.100.dylib
+		libopenh264.0.dylib
 		libiconv.2.dylib
 		libintl.8.dylib
 		mediastreamer/plugins/libmsamr.dylib
