@@ -43,51 +43,27 @@ list(GET SPLITTED_LINPHONE_VERSION 1 LINPHONE_MINOR_VERSION)
 list(GET SPLITTED_LINPHONE_VERSION 2 LINPHONE_MICRO_VERSION)
 set(PACKAGE_VERSION "${LINPHONE_VERSION}")
 
-# Translates absolute internal dependency path of FFMepeg libraries into relative path on MacOSX
+# Preparing the Linphone SDK bundle
 if(APPLE)
 	set(LINPHONE_SDK_TMP ${CMAKE_CURRENT_BINARY_DIR}/linphone-sdk-tmp)
 	file(REMOVE_RECURSE ${LINPHONE_SDK_TMP})
 	file(COPY ${LINPHONE_OUTPUT_DIR} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/OUTPUT ${LINPHONE_SDK_TMP})
-	set(RPATH_CHANGE_CMDS
-		-change ${LINPHONE_OUTPUT_DIR}/lib/libavcodec.53.61.100.dylib @rpath/libavcodec.53.61.100.dylib
-		-change ${LINPHONE_OUTPUT_DIR}/lib/libavutil.51.35.100.dylib @rpath/libavutil.51.35.100.dylib
-		-change ${LINPHONE_OUTPUT_DIR}/lib/libswscale.2.1.100.dylib @rpath/libswscale.2.1.100.dylib
-		-change ${LINPHONE_OUTPUT_DIR}/lib/libswresample.0.6.100.dylib @rpath/libswresample.0.6.100.dylib
-		-change ${LINPHONE_OUTPUT_DIR}/lib/libopenh264.0.dylib @rpath/libopenh264.0.dylib
-		-change /usr/local/opt/gettext/lib/libintl.8.dylib @rpath/libintl.8.dylib
-		-change /lib/libopenh264.0.dylib @rpath/libopenh264.0.dylib
-		-change ${LINPHONE_OUTPUT_DIR}/lib/libopenh264.0.dylib @rpath/libopenh264.0.dylib
-	)
-	set(RPATH_LIBS_TO_MODIFY
-		libavcodec.53.61.100.dylib
-		libavutil.51.35.100.dylib
-		liblinphone.8.dylib
-		libmediastreamer_voip.6.dylib
-		libswresample.0.6.100.dylib
-		libswscale.2.1.100.dylib
-		libopenh264.0.dylib
-		libiconv.2.dylib
-		libintl.8.dylib
-		mediastreamer/plugins/libmsamr.dylib
-		mediastreamer/plugins/libmsbcg729.dylib
-		mediastreamer/plugins/libmsilbc.dylib
-		mediastreamer/plugins/libmsopenh264.dylib
-		mediastreamer/plugins/libmssilk.dylib
-		mediastreamer/plugins/libmswebrtc.dylib
-	)
 
-	file(COPY /usr/local/opt/gettext/lib/libintl.8.dylib DESTINATION ${LINPHONE_SDK_TMP}/lib FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE)
-	execute_process(
-		COMMAND install_name_tool -id @rpath/libintl.8.dylib ${LINPHONE_SDK_TMP}/lib/libintl.8.dylib
+	file(COPY
+		/usr/local/opt/gettext/lib/libintl.8.dylib
+		/usr/local/opt/gettext/lib/libintl.dylib
+		DESTINATION ${LINPHONE_SDK_TMP}/lib
+	       FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
 	)
-	foreach(LIB_TO_CHANGE ${RPATH_LIBS_TO_MODIFY})
-		execute_process(
-			COMMAND install_name_tool ${RPATH_CHANGE_CMDS} ${LINPHONE_SDK_TMP}/lib/${LIB_TO_CHANGE}
-			COMMAND install_name_tool -id @rpath/${LIB_TO_CHANGE} ${LINPHONE_SDK_TMP}/lib/${LIB_TO_CHANGE}
-			COMMAND install_name_tool -delete_rpath ${LINPHONE_OUTPUT_DIR}/lib ${LINPHONE_SDK_TMP}/lib/${LIB_TO_CHANGE}
-		)
-	endforeach()
+	execute_process(COMMAND install_name_tool
+		-id @rpath/libintl.8.dylib
+		${LINPHONE_SDK_TMP}/lib/libintl.8.dylib
+	)
+        execute_process(COMMAND install_name_tool
+    	    -change /usr/local/opt/gettext/lib/libintl.8.dylib @rpath/libintl.8.dylib
+	    ${LINPHONE_SDK_TMP}/lib/liblinphone.dylib
+	)
 	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/README.openh264.txt DESTINATION ${LINPHONE_SDK_TMP})
 endif()
 
@@ -185,12 +161,14 @@ if(MSVC)
 		FILES_MATCHING PATTERN "libmswasapi.dll"
 	)
 	string(REGEX REPLACE "Visual Studio ([0-9]+).*" "\\1" MSVC_VERSION "${CMAKE_GENERATOR}")
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		set(MSVC_DEBUG_SYSTEM_LIBRARIES "d")
-	endif()
-	find_file(MSVCP_LIB "msvcp${MSVC_VERSION}0${MSVC_DEBUG_SYSTEM_LIBRARIES}.dll" PATHS "C:/Windows/System32")
-	find_file(MSVCR_LIB "msvcr${MSVC_VERSION}0${MSVC_DEBUG_SYSTEM_LIBRARIES}.dll" PATHS "C:/Windows/System32")
+	find_file(MSVCP_LIB "msvcp${MSVC_VERSION}0.dll" PATHS "C:/Windows/System32")
+	find_file(MSVCR_LIB "msvcr${MSVC_VERSION}0.dll" PATHS "C:/Windows/System32")
 	install(FILES ${MSVCP_LIB} ${MSVCR_LIB} DESTINATION "bin")
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		find_file(MSVCPD_LIB "msvcp${MSVC_VERSION}0d.dll" PATHS "C:/Windows/System32")
+		find_file(MSVCRD_LIB "msvcr${MSVC_VERSION}0d.dll" PATHS "C:/Windows/System32")
+		install(FILES ${MSVCPD_LIB} ${MSVCRD_LIB} DESTINATION "bin")
+	endif()
 endif()
 
 set(CPACK_PACKAGE_NAME "Linphone")
