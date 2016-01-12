@@ -49,20 +49,20 @@ if(APPLE)
 	file(REMOVE_RECURSE ${LINPHONE_SDK_TMP})
 	file(COPY ${LINPHONE_OUTPUT_DIR} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/OUTPUT ${LINPHONE_SDK_TMP})
-	set(RPATH_CHANGE_CMDS
-		-change /usr/local/opt/gettext/lib/libintl.8.dylib @rpath/libintl.8.dylib	)
+
 	file(COPY
 		/usr/local/opt/gettext/lib/libintl.8.dylib
 		/usr/local/opt/gettext/lib/libintl.dylib
 		DESTINATION ${LINPHONE_SDK_TMP}/lib
+	       FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
 	)
 	execute_process(COMMAND install_name_tool
 		-id @rpath/libintl.8.dylib
 		${LINPHONE_SDK_TMP}/lib/libintl.8.dylib
 	)
-	execute_process(COMMAND install_name_tool
-		-change /usr/local/opt/gettext/lib/libintl.8.dylib @rpath/libintl.8.dylib
-		${LINPHONE_SDK_TMP}/lib/liblinphone.dylib
+        execute_process(COMMAND install_name_tool
+    	    -change /usr/local/opt/gettext/lib/libintl.8.dylib @rpath/libintl.8.dylib
+	    ${LINPHONE_SDK_TMP}/lib/liblinphone.dylib
 	)
 	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/README.openh264.txt DESTINATION ${LINPHONE_SDK_TMP})
 endif()
