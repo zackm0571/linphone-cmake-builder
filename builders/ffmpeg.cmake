@@ -59,7 +59,12 @@ else()
 		"--disable-vda"
 		"--disable-vaapi"
 		"--disable-vdpau"
-		"--extra-cflags=-w"
+		"--ar=\$AR"
+		"--cc=\$CC"
+		"--nm=\$NM"
+		"--extra-cflags=\$CFLAGS -w"
+		"--extra-cxxflags=\$CXXFLAGS"
+		"--extra-ldflags=\$LDFLAGS"
 	)
 	if(ENABLE_H263 OR IOS)
 		list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS
@@ -93,12 +98,7 @@ else()
 					"--disable-iconv"
 					"--enable-cross-compile"
 					"--cross-prefix=${SDK_BIN_PATH}/"
-					"--sysroot=${SYSROOT_PATH}"
-					"--ar=\$AR"
-					"--cc=\$CC"
-					"--nm=\$NM"
-					"--extra-cflags=\$CFLAGS"
-					"--extra-ldflags=\$LDFLAGS"
+					"--sysroot=${CMAKE_OSX_SYSROOT}"
 				)
 				set(EP_ffmpeg_MAKE_OPTIONS "RANLIB=\"\$RANLIB\"")
 				if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
@@ -116,6 +116,7 @@ else()
 			set(EP_ffmpeg_TARGET_OS "linux")
 			set(EP_ffmpeg_PATCH_COMMAND "${PATCH_PROGRAM}" "-p1" "-i" "${CMAKE_CURRENT_SOURCE_DIR}/builders/ffmpeg/no-sdl.patch" ${EP_ffmpeg_PATCH_OPTIONS})
 		endif()
+		list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS "--cc=$CC")
 	endif()
 
 	set(EP_ffmpeg_CROSS_COMPILATION_OPTIONS

@@ -33,8 +33,8 @@ if(EP_vpx_PREBUILT)
 	set(EP_vpx_URL "${CMAKE_CURRENT_BINARY_DIR}/${EP_vpx_FILENAME}")
 	set(EP_vpx_BUILD_METHOD "prebuilt")
 else()
-	set(EP_vpx_URL "http://storage.googleapis.com/downloads.webmproject.org/releases/webm/libvpx-1.4.0.tar.bz2")
-	set(EP_vpx_URL_HASH "MD5=63b1d7f59636a42eeeee9225cc14e7de")
+	set(EP_vpx_URL "http://storage.googleapis.com/downloads.webmproject.org/releases/webm/libvpx-1.5.0.tar.bz2")
+	set(EP_vpx_URL_HASH "MD5=49e59dd184caa255886683facea56fca")
 	set(EP_vpx_EXTERNAL_SOURCE_PATHS "externals/libvpx")
 	set(EP_vpx_BUILD_METHOD "autotools")
 	set(EP_vpx_DO_NOT_USE_CMAKE_FLAGS TRUE)
@@ -53,6 +53,10 @@ else()
 		"--disable-unit-tests"
 		"--as=yasm"
 	)
+	string(FIND "${CMAKE_C_COMPILER_LAUNCHER}" "ccache" CCACHE_ENABLED)
+	if (NOT "${CCACHE_ENABLED}" STREQUAL "-1")
+		list(APPEND EP_vpx_CONFIGURE_OPTIONS "--enable-ccache")
+	endif()
 
 	if(WIN32)
 		if(CMAKE_GENERATOR MATCHES "^Visual Studio")
@@ -129,5 +133,5 @@ else()
 		"--prefix=${CMAKE_INSTALL_PREFIX}"
 		"--target=${EP_vpx_TARGET}"
 	)
-	set(EP_vpx_CONFIGURE_ENV "LD=$CC")
+	set(EP_vpx_CONFIGURE_ENV "CC=$CC_NO_LAUNCHER LD=$CC_NO_LAUNCHER")
 endif()

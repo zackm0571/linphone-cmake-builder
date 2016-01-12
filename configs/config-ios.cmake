@@ -42,21 +42,14 @@ set(DEFAULT_VALUE_CMAKE_LINKING_TYPE "-DENABLE_STATIC=YES")
 if (NOT LINPHONE_IOS_DEPLOYMENT_TARGET)
 	set(LINPHONE_IOS_DEPLOYMENT_TARGET 6.0)
 endif()
-get_filename_component(COMPILER_NAME ${CMAKE_C_COMPILER} NAME)
-string(REGEX REPLACE "-clang$" "" LINPHONE_BUILDER_HOST ${COMPILER_NAME})
-string(REGEX REPLACE "^arm64" "aarch64" LINPHONE_BUILDER_HOST ${LINPHONE_BUILDER_HOST})
-unset(COMPILER_NAME)
+set(LINPHONE_BUILDER_HOST "${CMAKE_SYSTEM_PROCESSOR}-apple-darwin")
 if("${PLATFORM}" MATCHES "Simulator")
 	set(CLANG_TARGET_SPECIFIER "ios-simulator-version-min")
 else()
 	set(CLANG_TARGET_SPECIFIER "iphoneos-version-min")
 endif()
-set(COMMON_FLAGS "-arch ${LINPHONE_BUILDER_OSX_ARCHITECTURES} -m${CLANG_TARGET_SPECIFIER}=${LINPHONE_IOS_DEPLOYMENT_TARGET} -DTARGET_OS_IPHONE=1 -D__IOS -fms-extensions")
-#XCode7  allows bitcode
-if (NOT ${XCODE_VERSION} VERSION_LESS 7)
-	set(COMMON_FLAGS "${COMMON_FLAGS} -fembed-bitcode")
-endif()
-set(LINPHONE_BUILDER_CPPFLAGS "${COMMON_FLAGS} -Dasm=__asm")
+set(COMMON_FLAGS "-m${CLANG_TARGET_SPECIFIER}=${LINPHONE_IOS_DEPLOYMENT_TARGET} -DTARGET_OS_IPHONE=1 -D__IOS -fms-extensions")
+set(LINPHONE_BUILDER_CPPFLAGS "${COMMON_FLAGS}")
 set(LINPHONE_BUILDER_LDFLAGS "${COMMON_FLAGS}")
 set(LINPHONE_BUILDER_PKG_CONFIG_LIBDIR ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)	# Restrict pkg-config to search in the install directory
 unset(COMMON_FLAGS)
@@ -82,7 +75,7 @@ list(APPEND EP_bellesip_CMAKE_OPTIONS "-DENABLE_TESTS=NO")
 list(APPEND EP_bzrtp_CMAKE_OPTIONS "-DENABLE_TESTS=NO")
 
 # ffmpeg
-set(EP_ffmpeg_LINKING_TYPE "--enable-static" "--disable-shared")
+set(EP_ffmpeg_LINKING_TYPE "--enable-static" "--disable-shared" "--enable-pic")
 
 # linphone
 list(APPEND EP_linphone_CMAKE_OPTIONS

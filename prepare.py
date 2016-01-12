@@ -56,7 +56,7 @@ class Target:
             output_dir = output_dir.replace('\\', '/')
         return output_dir
 
-    def cmake_command(self, build_type, latest, list_cmake_variables, additional_args):
+    def cmake_command(self, build_type, latest, list_cmake_variables, additional_args, verbose=True):
         current_path = os.path.dirname(os.path.realpath(__file__))
         cmd = ['cmake', current_path]
         if self.generator is not None:
@@ -84,7 +84,8 @@ class Target:
                 cmd_str += ' \"' + w + '\"'
             else:
                 cmd_str += ' ' + w
-        print(cmd_str)
+        if verbose:
+            print(cmd_str)
         return cmd
 
     def clean(self):
@@ -208,7 +209,7 @@ def run(target, debug, latest, list_cmake_variables, force_build, additional_arg
     if os.path.isdir(target.abs_cmake_dir):
         if force_build is False:
             print("Working directory {} already exists. Please remove it (option -C or -c) before re-executing CMake "
-                  "to avoid conflicts between executions.".format(target.cmake_dir))
+                  "to avoid conflicts between executions, or force execution (option -f) if you are aware of consequences.".format(target.cmake_dir))
             return 51
     else:
         os.makedirs(target.abs_cmake_dir)
