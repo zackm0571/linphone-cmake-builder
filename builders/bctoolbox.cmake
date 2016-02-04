@@ -1,5 +1,5 @@
 ############################################################################
-# polarssl.cmake
+# belle-sip.cmake
 # Copyright (C) 2014  Belledonne Communications, Grenoble France
 #
 ############################################################################
@@ -20,14 +20,28 @@
 #
 ############################################################################
 
-set(EP_polarssl_GIT_REPOSITORY "git://git.linphone.org/polarssl.git" CACHE STRING "polarssl repository URL")
-set(EP_polarssl_GIT_TAG_LATEST "linphone-1.4" CACHE STRING "polarssl tag to use when compiling latest version")
-set(EP_polarssl_GIT_TAG "3b7c2443e75e51b7af67a3e5dcb3771ae3120ff3" CACHE STRING "polarssl tag to use")
-set(EP_polarssl_EXTERNAL_SOURCE_PATHS "polarssl" "externals/polarssl")
+set(EP_bctoolbox_EXTERNAL_SOURCE_PATHS "bctoolbox")
+set(EP_bctoolbox_GROUPABLE YES)
 
-set(EP_polarssl_LINKING_TYPE "-DUSE_SHARED_POLARSSL_LIBRARY=1")
+set(EP_bctoolbox_LINKING_TYPE "${DEFAULT_VALUE_CMAKE_LINKING_TYPE}")
+set(EP_bctoolbox_DEPENDENCIES )
+if(LINPHONE_BUILDER_BUILD_DEPENDENCIES)
+	list(APPEND EP_bctoolbox_DEPENDENCIES EP_polarssl)
+endif()
 if(MSVC)
-	set(EP_polarssl_EXTRA_LDFLAGS "/SAFESEH:NO")
+	set(EP_bctoolbox_EXTRA_LDFLAGS "/SAFESEH:NO")
 endif()
 
-set(EP_polarssl_CMAKE_OPTIONS "-DENABLE_PROGRAMS=0" "-DENABLE_TESTING=0")
+
+# TODO: Activate strict compilation options on IOS
+if(IOS)
+	list(APPEND EP_bctoolbox_CMAKE_OPTIONS "-DENABLE_STRICT=NO")
+endif()
+
+list(APPEND EP_bctoolbox_CMAKE_OPTIONS "-DENABLE_TESTS=${ENABLE_UNIT_TESTS}")
+if(ENABLE_UNIT_TESTS AND LINPHONE_BUILDER_BUILD_DEPENDENCIES)
+	list(APPEND EP_bctoolbox_DEPENDENCIES EP_cunit)
+endif()
+
+#set(EP_bctoolbox_SPEC_FILE "bctoolbox.spec")
+#set(EP_bctoolbox_RPMBUILD_NAME "belle-sip")

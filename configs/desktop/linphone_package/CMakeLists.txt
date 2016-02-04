@@ -45,10 +45,10 @@ set(PACKAGE_VERSION "${LINPHONE_VERSION}")
 
 # Preparing the Linphone SDK bundle
 if(APPLE)
-	set(LINPHONE_SDK_TMP ${CMAKE_CURRENT_BINARY_DIR}/linphone-sdk-tmp)
-	file(REMOVE_RECURSE ${LINPHONE_SDK_TMP})
-	file(COPY ${LINPHONE_OUTPUT_DIR} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-	file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/OUTPUT ${LINPHONE_SDK_TMP})
+	set(LINPHONE_SDK_TMP "${CMAKE_CURRENT_BINARY_DIR}/linphone-sdk-tmp")
+	file(REMOVE_RECURSE "${LINPHONE_SDK_TMP}")
+	file(COPY "${LINPHONE_OUTPUT_DIR}" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+	file(RENAME "${CMAKE_CURRENT_BINARY_DIR}/OUTPUT" "${LINPHONE_SDK_TMP}")
 
 	file(COPY
 		/usr/local/opt/gettext/lib/libintl.8.dylib
@@ -64,7 +64,9 @@ if(APPLE)
     	    -change /usr/local/opt/gettext/lib/libintl.8.dylib @rpath/libintl.8.dylib
 	    ${LINPHONE_SDK_TMP}/lib/liblinphone.dylib
 	)
-	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/README.openh264.txt DESTINATION ${LINPHONE_SDK_TMP})
+	if(ENABLE_OPENH264)
+		configure_file("${CMAKE_CURRENT_SOURCE_DIR}/README.openh264.txt.in" "${LINPHONE_SDK_TMP}/README.openh264.txt" @ONLY)
+	endif()
 endif()
 
 # Generates a zip archive containing the development files of liblinphone
@@ -75,16 +77,18 @@ if(WIN32)
 			COMMAND ${7Z_PROGRAM} a -tzip ${CMAKE_BINARY_DIR}/linphone-sdk-${LINPHONE_GIT_REVISION}-win32.zip @${CMAKE_SOURCE_DIR}/linphone-sdk.list
 			WORKING_DIRECTORY ${LINPHONE_OUTPUT_DIR}
 		)
-		execute_process(
-			COMMAND ${7Z_PROGRAM} a -tzip ${CMAKE_BINARY_DIR}/linphone-sdk-${LINPHONE_GIT_REVISION}-win32.zip ${CMAKE_SOURCE_DIR}/README.openh264.txt
-		)
+		if(ENABLE_OPENH264)
+			execute_process(
+				COMMAND ${7Z_PROGRAM} a -tzip ${CMAKE_BINARY_DIR}/linphone-sdk-${LINPHONE_GIT_REVISION}-win32.zip ${CMAKE_SOURCE_DIR}/README.openh264.txt
+			)
+		endif()
 	else()
 		message(WARNING "7z has not been found, cannot generate the SDK!")
 	endif()
 elseif(APPLE)
 	execute_process(
-		COMMAND rm -rf ${CMAKE_BINARY_DIR}/linphone-sdk-${LINPHONE_GIT_REVISION}-mac.zip
-		COMMAND zip -ry ${CMAKE_BINARY_DIR}/linphone-sdk-${LINPHONE_GIT_REVISION}-mac.zip . -i @${CMAKE_SOURCE_DIR}/linphone-sdk-mac.list
+		COMMAND rm -rf "${CMAKE_BINARY_DIR}/linphone-sdk-${LINPHONE_GIT_REVISION}-mac.zip"
+		COMMAND zip -ry "${CMAKE_BINARY_DIR}/linphone-sdk-${LINPHONE_GIT_REVISION}-mac.zip" . -i "@${CMAKE_SOURCE_DIR}/linphone-sdk-mac.list"
 		WORKING_DIRECTORY ${LINPHONE_SDK_TMP}
 	)
 endif()
@@ -133,24 +137,33 @@ if(WIN32)
 		PATTERN "bin/openh264.dll" EXCLUDE
 	)
 
-	install(DIRECTORY "${LINPHONE_OUTPUT_DIR}/lib/mediastreamer/plugins/"
-		DESTINATION "lib/mediastreamer/plugins"
-		COMPONENT "msopenh264"
-		FILES_MATCHING PATTERN "libmsopenh264.*"
-	)
-	
+	if(ENABLE_OPENH264)
+		install(DIRECTORY "${LINPHONE_OUTPUT_DIR}/lib/mediastreamer/plugins/"
+			DESTINATION "lib/mediastreamer/plugins"
+			COMPONENT "msopenh264"
+			FILES_MATCHING PATTERN "libmsopenh264.*"
+		)
+	endif()
+
 	install(DIRECTORY "${LINPHONE_OUTPUT_DIR}/lib/mediastreamer/plugins/"
 		DESTINATION "lib/mediastreamer/plugins"
 		FILES_MATCHING PATTERN "libmssilk.*" PATTERN "libmsilbc.*"
 	)
 elseif(APPLE)
 	find_program(MAC_BUNDLER gtk-mac-bundler)
+	if(NOT MAC_BUNDLER)
+		message(FATAL_ERROR "Could not find gtk-mac-bundler executable!")
+	endif()
 	find_program(PATCH_PROGRAM patch)
+	if(NOT PATCH_PROGRAM)
+		message(FATAL_ERROR "Could not find patch executable!")
+	endif()
 	configure_file("${LINPHONE_SOURCE_DIR}/build/macos/Info-linphone.plist.in" "mac-bundler/Info-linphone.plist" @ONLY)
 	configure_file("${LINPHONE_SOURCE_DIR}/build/macos/environment.sh" "mac-bundler/environment.sh" COPYONLY)
 	configure_file("${LINPHONE_SOURCE_DIR}/gtk/gtkrc.mac" "mac-bundler/gtkrc" COPYONLY)
 	configure_file("${LINPHONE_SOURCE_DIR}/pixmaps/linphone.icns" "mac-bundler/linphone.icns" COPYONLY)
 	configure_file("mac-bundler/linphone.bundle" "mac-bundler/linphone.bundle" COPYONLY)	# This file has to be different than the one in the linphone source code because of different file access paths
+	configure_file("mac-bundler/pkg-scripts/postinstall.in" "mac-bundler/pkg-scripts/postinstall" @ONLY)
 	configure_file("mac-bundler/call-bundler.cmake.in" "mac-bundler/call-bundler.cmake")
 	install(SCRIPT "${CMAKE_BINARY_DIR}/mac-bundler/call-bundler.cmake")
 endif()
@@ -184,9 +197,11 @@ if(WIN32)
 	set(CPACK_COMPONENT_LINPHONE_BASE_DISPLAY_NAME "Linphone")
 	set(CPACK_COMPONENT_LINPHONE_BASE_DESCRIPTION "Minimal installation of Linphone")
 	set(CPACK_COMPONENT_LINPHONE_BASE_REQUIRED True)
-	set(CPACK_COMPONENT_MSOPENH264_DISPLAY_NAME "Cisco's OpenH264 codec")
-	set(CPACK_COMPONENT_MSOPENH264_DESCRIPTION "Download OpenH264 Video Codec provided by Cisco Systems, Inc.")
-	set(CPACK_COMPONENT_MSOPENH264_DISABLED True)
+	if(ENABLE_OPENH264)
+		set(CPACK_COMPONENT_MSOPENH264_DISPLAY_NAME "Cisco's OpenH264 codec")
+		set(CPACK_COMPONENT_MSOPENH264_DESCRIPTION "Download OpenH264 Video Codec provided by Cisco Systems, Inc.")
+		set(CPACK_COMPONENT_MSOPENH264_DISABLED True)
+	endif()
 endif()
 
 if(WIN32)
@@ -200,15 +215,20 @@ if(WIN32)
 	set(CPACK_NSIS_URL_INFO_ABOUT "http://www.linphone.org/")
 	set(CPACK_NSIS_MUI_FINISHPAGE_RUN "linphone")
 	set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL "ON")
-	
+
 	file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" DOS_STYLE_SOURCE_DIR)
 	string(REPLACE "\\" "\\\\" ESCAPED_DOS_STYLE_SOURCE_DIR "${DOS_STYLE_SOURCE_DIR}")
-	
-	# Add NSI instructions to download the openh264 codec from Cisco's servers whether msopenh264 has been installed
-	set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "!include \\\"${ESCAPED_DOS_STYLE_SOURCE_DIR}\\\\openh264-install.nsi\\\"")
-	
-	# Add NSI instructions to delete the openh264 codecs while uninstalling Linphone
-	set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "!include \\\"${ESCAPED_DOS_STYLE_SOURCE_DIR}\\\\openh264-uninstall.nsi\\\"")
+	file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}" DOS_STYLE_BINARY_DIR)
+	string(REPLACE "\\" "\\\\" ESCAPED_DOS_STYLE_BINARY_DIR "${DOS_STYLE_BINARY_DIR}")
+
+	if(ENABLE_OPENH264)
+		# Add NSI instructions to download the openh264 codec from Cisco's servers whether msopenh264 has been installed
+		configure_file("${CMAKE_CURRENT_SOURCE_DIR}/openh264-install.nsi.in" "${CMAKE_CURRENT_BINARY_DIR}/openh264-install.nsi" @ONLY)
+		set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "!include \\\"${ESCAPED_DOS_STYLE_BINARY_DIR}\\\\openh264-install.nsi\\\"")
+
+		# Add NSI instructions to delete the openh264 codecs while uninstalling Linphone
+		set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "!include \\\"${ESCAPED_DOS_STYLE_SOURCE_DIR}\\\\openh264-uninstall.nsi\\\"")
+	endif()
 
 	# Sign the installer
 	set(TIMESTAMP_URL "http://timestamp.verisign.com/scripts/timestamp.dll")
