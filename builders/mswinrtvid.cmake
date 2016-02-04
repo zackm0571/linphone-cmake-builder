@@ -1,6 +1,6 @@
 ############################################################################
-# polarssl.cmake
-# Copyright (C) 2014  Belledonne Communications, Grenoble France
+# mswinrtvid.cmake
+# Copyright (C) 2016  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,14 +20,11 @@
 #
 ############################################################################
 
-set(EP_polarssl_GIT_REPOSITORY "git://git.linphone.org/polarssl.git" CACHE STRING "polarssl repository URL")
-set(EP_polarssl_GIT_TAG_LATEST "linphone-1.4" CACHE STRING "polarssl tag to use when compiling latest version")
-set(EP_polarssl_GIT_TAG "3b7c2443e75e51b7af67a3e5dcb3771ae3120ff3" CACHE STRING "polarssl tag to use")
-set(EP_polarssl_EXTERNAL_SOURCE_PATHS "polarssl" "externals/polarssl")
+set(EP_mswinrtvid_GIT_REPOSITORY "git://git.linphone.org/mswinrtid.git" CACHE STRING "mswinrtvid repository URL")
+set(EP_mswinrtvid_GIT_TAG_LATEST "master" CACHE STRING "mswinrtvid tag to use when compiling latest version")
+set(EP_mswinrtvid_GIT_TAG "b067bca955dc170b54fffe019a6a7ce86c781c8a" CACHE STRING "mswinrtvid tag to use")
+set(EP_mswinrtvid_EXTERNAL_SOURCE_PATHS "mswinrtvid")
+set(EP_mswinrtvid_GROUPABLE YES)
 
-set(EP_polarssl_LINKING_TYPE "-DUSE_SHARED_POLARSSL_LIBRARY=1")
-if(MSVC)
-	set(EP_polarssl_EXTRA_LDFLAGS "/SAFESEH:NO")
-endif()
-
-set(EP_polarssl_CMAKE_OPTIONS "-DENABLE_PROGRAMS=0" "-DENABLE_TESTING=0")
+set(EP_mswinrtvid_LINKING_TYPE "${DEFAULT_VALUE_CMAKE_LINKING_TYPE}")
+set(EP_mswinrtvid_DEPENDENCIES EP_ms2)
