@@ -1,6 +1,6 @@
 ############################################################################
-# matroska2.cmake
-# Copyright (C) 2015  Belledonne Communications, Grenoble France
+# mbedtls.cmake
+# Copyright (C) 2016  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,7 +20,12 @@
 #
 ############################################################################
 
-set(EP_matroska2_GIT_REPOSITORY "git://git.linphone.org/libmatroska-c.git" CACHE STRING "matroska2 repository URL")
-set(EP_matroska2_GIT_TAG_LATEST "bc" CACHE STRING "matroska2 tag to use when compiling latest version")
-set(EP_matroska2_GIT_TAG "c3fc2746f18bafefe3010669d8d2855240565c86" CACHE STRING "matroska2 tag to use")
-set(EP_matroska2_EXTERNAL_SOURCE_PATHS "externals/libmatroska-c")
+set(EP_mbedtls_EXTERNAL_SOURCE_PATHS "mbedtls" "externals/mbedtls")
+
+set(EP_mbedtls_LINKING_TYPE "-DUSE_SHARED_MBEDTLS_LIBRARY=On")
+#set(EP_mbedtls_LINKING_TYPE "${DEFAULT_VALUE_CMAKE_LINKING_TYPE}")
+if(MSVC)
+	set(EP_mbedtls_EXTRA_LDFLAGS "/SAFESEH:NO")
+endif()
+
+set(EP_mbedtls_CMAKE_OPTIONS "-DENABLE_PROGRAMS=0" "-DENABLE_TESTING=0")
