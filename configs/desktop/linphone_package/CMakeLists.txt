@@ -49,30 +49,20 @@ if(APPLE)
 	file(REMOVE_RECURSE "${LINPHONE_SDK_TMP}")
 	file(COPY "${LINPHONE_OUTPUT_DIR}" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 	file(RENAME "${CMAKE_CURRENT_BINARY_DIR}/OUTPUT" "${LINPHONE_SDK_TMP}")
-	set(RPATH_CHANGE_CMDS
-		-change /opt/local/lib/libintl.8.dylib @rpath/libintl.8.dylib
-		-change /opt/local/lib/libiconv.2.dylib @rpath/libiconv.2.dylib
-	)
+
 	file(COPY
-		/opt/local/lib/libintl.8.dylib
-		/opt/local/lib/libintl.dylib
-		/opt/local/lib/libiconv.dylib
-		/opt/local/lib/libiconv.2.dylib
+		/usr/local/opt/gettext/lib/libintl.8.dylib
+		/usr/local/opt/gettext/lib/libintl.dylib
 		DESTINATION ${LINPHONE_SDK_TMP}/lib
+	       FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE
 	)
 	execute_process(COMMAND install_name_tool
 		-id @rpath/libintl.8.dylib
-		-change /opt/local/lib/libiconv.2.dylib @rpath/libiconv.2.dylib
 		${LINPHONE_SDK_TMP}/lib/libintl.8.dylib
 	)
-	execute_process(COMMAND install_name_tool
-		-id @rpath/libiconv.2.dylib
-		${LINPHONE_SDK_TMP}/lib/libiconv.2.dylib
-	)
-	execute_process(COMMAND install_name_tool
-		-change /opt/local/lib/libintl.8.dylib @rpath/libintl.8.dylib
-		-change /opt/local/lib/libiconv.2.dylib @rpath/libiconv.2.dylib
-		${LINPHONE_SDK_TMP}/lib/liblinphone.dylib
+        execute_process(COMMAND install_name_tool
+    	    -change /usr/local/opt/gettext/lib/libintl.8.dylib @rpath/libintl.8.dylib
+	    ${LINPHONE_SDK_TMP}/lib/liblinphone.dylib
 	)
 	if(ENABLE_OPENH264)
 		configure_file("${CMAKE_CURRENT_SOURCE_DIR}/README.openh264.txt.in" "${LINPHONE_SDK_TMP}/README.openh264.txt" @ONLY)
@@ -160,8 +150,7 @@ if(WIN32)
 		FILES_MATCHING PATTERN "libmssilk.*"
 	)
 elseif(APPLE)
-	find_program(MAC_BUNDLER gtk-mac-bundler)
-	if(NOT MAC_BUNDLER)
+    if(false)
 		message(FATAL_ERROR "Could not find gtk-mac-bundler executable!")
 	endif()
 	find_program(PATCH_PROGRAM patch)
