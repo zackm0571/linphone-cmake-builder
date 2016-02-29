@@ -147,7 +147,7 @@ if(WIN32)
 
 	install(DIRECTORY "${LINPHONE_OUTPUT_DIR}/lib/mediastreamer/plugins/"
 		DESTINATION "lib/mediastreamer/plugins"
-		FILES_MATCHING PATTERN "libmssilk.*" PATTERN "libmsilbc.*"
+		FILES_MATCHING PATTERN "libmssilk.*"
 	)
 elseif(APPLE)
     if(false)
