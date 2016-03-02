@@ -1,5 +1,5 @@
 ############################################################################
-# tunnel.cmake
+# bv16.cmake
 # Copyright (C) 2014  Belledonne Communications, Grenoble France
 #
 ############################################################################
@@ -20,16 +20,12 @@
 #
 ############################################################################
 
-set(EP_tunnel_GIT_REPOSITORY "gitosis@git.linphone.org:tunnel.git" CACHE STRING "tunnel repository URL") # Private repository
-set(EP_tunnel_GIT_TAG_LATEST "master" CACHE STRING "tunnel tag to use when compiling latest version")
-set(EP_tunnel_GIT_TAG "94150ed5ffda2c07407e68a9bbd3ccb985600d34" CACHE STRING "tunnel tag to use")
-set(EP_tunnel_EXTERNAL_SOURCE_PATHS "tunnel")
-set(EP_tunnel_GROUPABLE YES)
+set(EP_bv16_GIT_REPOSITORY "git://git.linphone.org/bv16-floatingpoint.git" CACHE STRING "bv16 repository URL")
+set(EP_bv16_GIT_TAG_LATEST "linphone" CACHE STRING "bv16 tag to use when compiling latest version")
+set(EP_bv16_GIT_TAG "f2c49dcdee0a1b7cea3751022c923672fa082984" CACHE STRING "bv16 tag to use")
+set(EP_bv16_EXTERNAL_SOURCE_PATHS "externals/bv16-floatingpoint")
 
-set(EP_tunnel_LINKING_TYPE ${DEFAULT_VALUE_CMAKE_LINKING_TYPE})
-set(EP_tunnel_DEPENDENCIES )
-if(LINPHONE_BUILDER_BUILD_DEPENDENCIES)
-	list(APPEND EP_tunnel_DEPENDENCIES EP_bctoolbox)
+set(EP_bv16_LINKING_TYPE ${DEFAULT_VALUE_CMAKE_LINKING_TYPE})
+if(MSVC)
+	set(EP_bv16_EXTRA_LDFLAGS "/SAFESEH:NO")
 endif()
-
-set(EP_tunnel_CMAKE_OPTIONS "-DENABLE_SERVERS=NO")
