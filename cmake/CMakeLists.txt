@@ -461,7 +461,7 @@ macro(linphone_builder_filter_out_inexistent_dependencies PROJNAME)
 			list(FIND LINPHONE_BUILDER_INCLUDED_BUILDERS ${_dep2} _found)
 			list(FIND LINPHONE_BUILDER_INCLUDED_BUILDERS_TO_EXCLUDE ${_dep2} _excluded_found)
 			list(FIND LINPHONE_BUILDER_EXTERNAL_SOURCE_PATH_BUILDERS ${_dep2} _external_source_path_found)
-			if((_found GREATER -1) AND (_excluded_found EQUAL -1) AND ((_external_source_path_found EQUAL -1) OR (NOT EP_${_dep2}_GROUPABLE)))
+			if((_found GREATER -1) AND (_excluded_found EQUAL -1) AND ((_external_source_path_found EQUAL -1) OR (NOT EP_${_dep2}_GROUPABLE) OR (NOT LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)))
 				list(APPEND _new_deps ${_dep})
 			endif()
 		endforeach()
@@ -609,10 +609,11 @@ macro(linphone_builder_add_external_project PROJNAME)
 			set(LINPHONE_BUILDER_RPMBUILD_NAME "${PROJNAME}")
 		endif()
 
-		# a distinctive name of the generated RPM. It is used to find the rpms to install
-		# in the install step. Defaults to $PROJNAME but could be something else
+		# some specific RPMBUILD options to pass for this particular project
 		if(EP_${PROJNAME}_RPMBUILD_OPTIONS)
 			set(LINPHONE_BUILDER_RPMBUILD_OPTIONS "${EP_${PROJNAME}_RPMBUILD_OPTIONS}")
+		else()
+			set(LINPHONE_BUILDER_RPMBUILD_OPTIONS "")
 		endif()
 
 		set(LINPHONE_BUILDER_SPEC_PREFIX "${EP_${PROJNAME}_SPEC_PREXIX}")
@@ -625,6 +626,8 @@ macro(linphone_builder_add_external_project PROJNAME)
 
 		if(EP_${PROJNAME}_CONFIGURE_EXTRA_CMD)
 			set(LINPHONE_BUILDER_CONFIGURE_EXTRA_CMD "${EP_${PROJNAME}_CONFIGURE_EXTRA_CMD}")
+		else()
+			set(LINPHONE_BUILDER_CONFIGURE_EXTRA_CMD "")
 		endif()
 
 		# allow to have special command steps
