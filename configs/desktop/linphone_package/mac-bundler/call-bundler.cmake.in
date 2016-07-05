@@ -19,7 +19,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
 ############################################################################
-
+if(false)
 set(ENV{LINPHONE_INSTALL_PREFIX} "${LINPHONE_OUTPUT_DIR}")
 set(ENV{MS2_PLUGINS_INSTALL_PREFIX} "${LINPHONE_OUTPUT_DIR}")
 set(ENV{BUNDLE_PREFIX} "${CMAKE_INSTALL_PREFIX}")
@@ -48,3 +48,4 @@ execute_process(
 		"./linphone-${LINPHONE_GIT_REVISION}.pkg"
 	WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
+endif()
