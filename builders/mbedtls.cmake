@@ -24,10 +24,12 @@ set(EP_mbedtls_GIT_REPOSITORY "git://git.linphone.org/mbedtls.git" CACHE STRING 
 set(EP_mbedtls_GIT_TAG_LATEST "linphone" CACHE STRING "mbedtls tag to use when compiling latest version")
 set(EP_mbedtls_GIT_TAG "3b88f2749d59e5346de08e121fba1d797c55ddaa" CACHE STRING "mbedtls tag to use")
 set(EP_mbedtls_EXTERNAL_SOURCE_PATHS "mbedtls" "externals/mbedtls")
+set(EP_mbedtls_MAY_BE_FOUND_ON_SYSTEM TRUE)
+set(EP_mbedtls_IGNORE_WARNINGS TRUE)
 
-set(EP_mbedtls_LINKING_TYPE "-DUSE_SHARED_MBEDTLS_LIBRARY=On")
+set(EP_mbedtls_LINKING_TYPE "-DUSE_STATIC_MBEDTLS_LIBRARY=NO" "-DUSE_SHARED_MBEDTLS_LIBRARY=YES")
+set(EP_mbedtls_CMAKE_OPTIONS "-DENABLE_PROGRAMS=NO" "-DENABLE_TESTING=NO")
 if(MSVC)
+	set(EP_mbedtls_EXTRA_CFLAGS "-DMBEDTLS_PLATFORM_SNPRINTF_MACRO=_snprintf -DMBEDTLS_EXPORTS")
 	set(EP_mbedtls_EXTRA_LDFLAGS "/SAFESEH:NO")
 endif()
-
-set(EP_mbedtls_CMAKE_OPTIONS "-DENABLE_PROGRAMS=0" "-DENABLE_TESTING=0")

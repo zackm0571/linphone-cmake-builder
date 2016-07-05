@@ -27,3 +27,5 @@ if (NOT ${XCODE_VERSION} VERSION_LESS 7)
 	set(LINPHONE_BUILDER_CPPFLAGS "${LINPHONE_BUILDER_CPPFLAGS} -fembed-bitcode")
 endif()
 
+# speex
+linphone_builder_add_cmake_option(speex "-DENABLE_ARM_NEON_INTRINSICS=1")

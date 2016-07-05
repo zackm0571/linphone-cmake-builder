@@ -21,7 +21,7 @@
 ############################################################################
 
 # Define default values for the flexisip builder options
-set(DEFAULT_VALUE_DISABLE_BC_ANTLR ON)
+set(DEFAULT_VALUE_DISABLE_BC_ANTLR OFF)
 set(DEFAULT_VALUE_ENABLE_BC_ODBC OFF)
 set(DEFAULT_VALUE_ENABLE_ODB OFF)
 set(DEFAULT_VALUE_ENABLE_ODBC ON)
@@ -30,6 +30,9 @@ set(DEFAULT_VALUE_ENABLE_REDIS ON)
 set(DEFAULT_VALUE_ENABLE_UNIT_TESTS OFF)
 set(DEFAULT_VALUE_ENABLE_PRESENCE OFF)
 set(DEFAULT_VALUE_ENABLE_SNMP ON)
+set(DEFAULT_VALUE_ENABLE_POLARSSL ON)
+
+set(DEFAULT_VALUE_ENABLE_VIDEO OFF)
 
 set(DEFAULT_VALUE_CMAKE_LINKING_TYPE "-DENABLE_STATIC=NO")
 
@@ -65,6 +68,9 @@ if(_IS_SYSTEM_DIR STREQUAL "-1")
    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 message("cmake install rpath: ${CMAKE_INSTALL_RPATH}")
+
+# bctoolbox
+linphone_builder_add_cmake_option(bctoolbox "-DENABLE_TESTS_COMPONENT=NO")
 
 # Include builders
 include(builders/CMakeLists.txt)

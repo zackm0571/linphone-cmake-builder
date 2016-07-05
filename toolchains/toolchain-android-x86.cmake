@@ -1,6 +1,6 @@
 ############################################################################
-# cunit.cmake
-# Copyright (C) 2014  Belledonne Communications, Grenoble France
+# toolchan-android-x86.cmake
+# Copyright (C) 2016  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,14 +20,33 @@
 #
 ############################################################################
 
-set(EP_cunit_GIT_REPOSITORY "git://git.linphone.org/cunit.git" CACHE STRING "cunit repository URL")
-set(EP_cunit_GIT_TAG_LATEST "linphone" CACHE STRING "cunit tag to use when compiling latest version")
-set(EP_cunit_GIT_TAG "0a0a9c60f5a1b899ae26b705fa5224ef25377982" CACHE STRING "cunit tag to use")
-set(EP_cunit_EXTERNAL_SOURCE_PATHS "cunit" "externals/cunit")
+set(CMAKE_SYSTEM_PROCESSOR "x86")
+set(ARCHITECTURE "x86")
+set(NDK_ARCHITECTURE "x86")
+set(COMPILER_PREFIX "i686-linux-android")
+set(CLANG_TARGET "i686-none-linux-androideabi")
+include("${CMAKE_CURRENT_LIST_DIR}/android/toolchain-android.cmake")
 
-set(EP_cunit_LINKING_TYPE ${DEFAULT_VALUE_CMAKE_LINKING_TYPE})
-if(MSVC)
-	set(EP_cunit_EXTRA_LDFLAGS "/SAFESEH:NO")
+add_compile_options(
+	"-ffunction-sections"
+	"-funwind-tables"
+	"-fstack-protector"
+	"-no-canonical-prefixes"
+	"-fomit-frame-pointer"
+	"-fstrict-aliasing"
+)
+
+if(NOT CLANG_EXECUTABLE)
+	add_compile_options(
+		"-funswitch-loops"
+		"-finline-limit=300"
+	)
 endif()
 
-set(EP_cunit_CMAKE_OPTIONS "-DENABLE_AUTOMATED=YES" "-DENABLE_CONSOLE=NO")
+link_libraries(
+	"-no-canonical-prefixes"
+	"-Wl,--no-undefined"
+	"-Wl,-z,noexecstack"
+	"-Wl,-z,relro"
+	"-Wl,-z,now"
+)

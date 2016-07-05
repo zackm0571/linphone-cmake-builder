@@ -1,8 +1,13 @@
 #!/bin/sh
 
-if [ -n "@AUTOTOOLS_AS_COMPILER@" ]
+if [ -n "@ep_use_c_compiler_for_assembler@" ]
 then
-	export AS="@AUTOTOOLS_AS_COMPILER@"
+	export AS="@AUTOTOOLS_C_COMPILER@"
+else
+	if [ -n "@AUTOTOOLS_AS_COMPILER@" ]
+	then
+		export AS="@AUTOTOOLS_AS_COMPILER@"
+	fi
 fi
 export CC="@AUTOTOOLS_C_COMPILER@"
 export CXX="@AUTOTOOLS_CXX_COMPILER@"
@@ -23,6 +28,7 @@ CXXFLAGS="@ep_cxxflags@"
 OBJCFLAGS="@ep_objcflags@"
 LDFLAGS="@ep_ldflags@"
 
+export PATH="$PATH:@AUTOTOOLS_PROGRAM_PATH@"
 export PKG_CONFIG="@LINPHONE_BUILDER_PKG_CONFIG@"
 export PKG_CONFIG_PATH="@LINPHONE_BUILDER_PKG_CONFIG_PATH@"
 export PKG_CONFIG_LIBDIR="@LINPHONE_BUILDER_PKG_CONFIG_LIBDIR@"

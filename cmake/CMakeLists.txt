@@ -43,14 +43,11 @@ else()
 endif()
 
 
-# Check for build tools and show an error if one of them is not present
-include(cmake/CheckBuildTools.cmake)
-
-
 set(LINPHONE_BUILDER_EP_VARS)
 set(LINPHONE_BUILDER_INCLUDED_BUILDERS)
 set(LINPHONE_BUILDER_INCLUDED_BUILDERS_TO_EXCLUDE)
 set(LINPHONE_BUILDER_EXTERNAL_SOURCE_PATH_BUILDERS)
+set(LINPHONE_BUILDER_SYSTEM_DEPENDENCIES_BUILDERS)
 
 macro(linphone_builder_expand_external_project_vars)
 	set(LINPHONE_BUILDER_EP_ARGS "")
@@ -101,6 +98,7 @@ list(APPEND LINPHONE_BUILDER_EP_VARS
 	CMAKE_MODULE_LINKER_FLAGS:STRING
 	CMAKE_MODULE_PATH:PATH
 	CMAKE_NO_BUILD_TYPE:BOOL
+	CMAKE_NO_SYSTEM_FROM_IMPORTED:BOOL
 	CMAKE_PREFIX_PATH:STRING
 	CMAKE_PROGRAM_PATH:STRING
 	CMAKE_RUNTIME_OUTPUT_DIRECTORY:PATH
@@ -109,6 +107,7 @@ list(APPEND LINPHONE_BUILDER_EP_VARS
 	CMAKE_SHARED_LINKER_FLAGS_RELEASE:STRING
 	CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO:STRING
 	CMAKE_SHARED_LINKER_FLAGS:STRING
+	CMAKE_SKIP_INSTALL_RPATH:BOOL
 	CMAKE_SKIP_RPATH:BOOL
 	CMAKE_SKIP_BUILD_RPATH:BOOL
 	CMAKE_VERBOSE_MAKEFILE:BOOL
@@ -181,19 +180,22 @@ endmacro()
 macro(linphone_builder_create_targets_list)
 	set(LINPHONE_BUILDER_TARGETS )
 	if(LINPHONE_BUILDER_TARGET STREQUAL "belle-sip")
-		list(APPEND LINPHONE_BUILDER_TARGETS "belle-sip" "bctoolbox")
+		list(APPEND LINPHONE_BUILDER_TARGETS "bctoolbox" "belle-sip")
 	elseif(LINPHONE_BUILDER_TARGET STREQUAL "ortp")
-		list(APPEND LINPHONE_BUILDER_TARGETS "ortp")
+		list(APPEND LINPHONE_BUILDER_TARGETS "bctoolbox" "ortp")
 	elseif(LINPHONE_BUILDER_TARGET STREQUAL "ms2")
-		list(APPEND LINPHONE_BUILDER_TARGETS "ortp" "ms2" "bctoolbox")
+		list(APPEND LINPHONE_BUILDER_TARGETS "bctoolbox" "ortp" "ms2")
 	elseif(LINPHONE_BUILDER_TARGET STREQUAL "ms2-plugins")
-		list(APPEND LINPHONE_BUILDER_TARGETS "ortp" "ms2" "ms2-plugins")
+		list(APPEND LINPHONE_BUILDER_TARGETS "bctoolbox" "ortp" "ms2" "ms2-plugins")
 	elseif(LINPHONE_BUILDER_TARGET STREQUAL "linphone")
-		list(APPEND LINPHONE_BUILDER_TARGETS "belle-sip" "ortp" "ms2" "ms2-plugins" "bctoolbox" "linphone")
+		list(APPEND LINPHONE_BUILDER_TARGETS "bctoolbox" "belle-sip" "ortp" "ms2" "ms2-plugins" "linphone")
 	elseif(LINPHONE_BUILDER_TARGET STREQUAL "flexisip")
-		list(APPEND LINPHONE_BUILDER_TARGETS "ortp" "flexisip")
+		list(APPEND LINPHONE_BUILDER_TARGETS "bctoolbox" "ortp" "flexisip")
+		if(ENABLE_TRANSCODER)
+			list(APPEND LINPHONE_BUILDER_TARGETS "ms2")
+		endif()
 		if(ENABLE_PRESENCE)
-			list(APPEND LINPHONE_BUILDER_TARGETS "belle-sip" "bctoolbox")
+			list(APPEND LINPHONE_BUILDER_TARGETS "belle-sip")
 		endif()
 	elseif(LINPHONE_BUILDER_TARGET STREQUAL "odb")
 		list(APPEND LINPHONE_BUILDER_TARGETS "odb" )
@@ -218,7 +220,14 @@ endmacro()
 
 macro(linphone_builder_add_builder_to_target TARGETNAME BUILDER)
 	linphone_builder_include_builder(${BUILDER})
-	if(LINPHONE_BUILDER_EXTERNAL_SOURCE_PATH AND (LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS OR LINPHONE_BUILDER_BUILD_ONLY_EXTERNAL_SOURCE_PATH))
+	if(LINPHONE_BUILDER_USE_SYSTEM_DEPENDENCIES AND EP_${BUILDER}_MAY_BE_FOUND_ON_SYSTEM)
+		list(FIND LINPHONE_BUILDER_SYSTEM_DEPENDENCIES_BUILDERS ${BUILDER} _already_included)
+		if(_already_included EQUAL -1)
+			message("    Using ${BUILDER} from the system")
+			list(APPEND LINPHONE_BUILDER_INCLUDED_BUILDERS_TO_EXCLUDE ${BUILDER})
+			list(APPEND LINPHONE_BUILDER_SYSTEM_DEPENDENCIES_BUILDERS ${BUILDER})
+		endif()
+	elseif(LINPHONE_BUILDER_EXTERNAL_SOURCE_PATH AND LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
 		foreach(SUBDIR ${EP_${BUILDER}_EXTERNAL_SOURCE_PATHS})
 			if(SUBDIR STREQUAL "<LINPHONE_BUILDER_TOP_DIR>")
 				set(_source_dir "${LINPHONE_BUILDER_TOP_DIR}")
@@ -239,8 +248,6 @@ macro(linphone_builder_add_builder_to_target TARGETNAME BUILDER)
 				list(APPEND LINPHONE_BUILDER_EXTERNAL_SOURCE_PATH_BUILDERS ${BUILDER})
 			endif()
 			unset(_already_included)
-		elseif(LINPHONE_BUILDER_BUILD_ONLY_EXTERNAL_SOURCE_PATH)
-			list(APPEND LINPHONE_BUILDER_INCLUDED_BUILDERS_TO_EXCLUDE ${BUILDER})
 		else()
 			#message("     ${TARGETNAME} depends on external project EP_${BUILDER}")
 			add_dependencies(${TARGETNAME} EP_${BUILDER})
@@ -303,6 +310,12 @@ endmacro()
 
 
 macro(linphone_builder_apply_extra_flags PROJNAME)
+	if(MSVC)
+		set(_no_warnings_flag "/W0")
+	else()
+		set(_no_warnings_flag "-w")
+	endif()
+
 	if(EP_${PROJNAME}_BUILD_METHOD STREQUAL "autotools")
 		set(ep_asflags "${ep_asflags} ${EP_${PROJNAME}_EXTRA_ASFLAGS}")
 		set(ep_cppflags "${ep_cppflags} ${EP_${PROJNAME}_EXTRA_CPPFLAGS}")
@@ -310,6 +323,9 @@ macro(linphone_builder_apply_extra_flags PROJNAME)
 		set(ep_cxxflags "${ep_cxxflags} ${EP_${PROJNAME}_EXTRA_CXXFLAGS}")
 		set(ep_objcflags "${ep_objcflags} ${EP_${PROJNAME}_EXTRA_OBJCFLAGS}")
 		set(ep_ldflags "${ep_ldflags} ${EP_${PROJNAME}_EXTRA_LDFLAGS}")
+		if(EP_${PROJNAME}_IGNORE_WARNINGS)
+			set(ep_cppflags "${ep_cppflags} ${_no_warnings_flag}")
+		endif()
 	else()
 		set(SAVED_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 		set(SAVED_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -326,6 +342,10 @@ macro(linphone_builder_apply_extra_flags PROJNAME)
 			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${EP_${PROJNAME}_EXTRA_LDFLAGS}")
 			set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${EP_${PROJNAME}_EXTRA_LDFLAGS}")
 			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${EP_${PROJNAME}_EXTRA_LDFLAGS}")
+		endif()
+		if(EP_${PROJNAME}_IGNORE_WARNINGS)
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_no_warnings_flag}")
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_no_warnings_flag}")
 		endif()
 	endif()
 endmacro()
@@ -416,6 +436,8 @@ macro(linphone_builder_create_autogen_command PROJNAME)
 			endforeach()
 		endif()
 		set(ep_autogen_command "\"${ep_source}/autogen.sh\" ${ep_autogen_options}")
+	elseif(EP_${PROJNAME}_USE_AUTORECONF)
+		set(ep_autogen_command "autoreconf -vfi ${ep_source}")
 	else()
 		set(ep_autogen_command "")
 	endif()
@@ -494,6 +516,11 @@ macro(linphone_builder_add_external_project PROJNAME)
 	if(NOT EP_${PROJNAME}_DO_NOT_USE_CMAKE_FLAGS)
 		linphone_builder_apply_cmake_flags_to_autotools_project(${PROJNAME})
 	endif()
+	if(EP_${PROJNAME}_USE_C_COMPILER_FOR_ASSEMBLER)
+		set(ep_use_c_compiler_for_assembler TRUE)
+	else()
+		unset(ep_use_c_compiler_for_assembler)
+	endif()
 	linphone_builder_apply_extra_flags(${PROJNAME})
 	linphone_builder_expand_external_project_vars()
 
@@ -547,8 +574,6 @@ macro(linphone_builder_add_external_project PROJNAME)
 			configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/mingw_configure.bat.cmake ${CMAKE_CURRENT_BINARY_DIR}/EP_${PROJNAME}_configure.bat)
 			configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/mingw_build.bat.cmake ${CMAKE_CURRENT_BINARY_DIR}/EP_${PROJNAME}_build.bat)
 			configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/mingw_install.bat.cmake ${CMAKE_CURRENT_BINARY_DIR}/EP_${PROJNAME}_install.bat)
-			# Build in source with MinGW as build out-of-source does not work
-			set(ep_build "${ep_source}")
 			if(ep_autogen_command)
 				set(ep_autogen_redirect_to_file ${ep_redirect_to_file})
 			endif()
@@ -657,6 +682,8 @@ macro(linphone_builder_add_external_project PROJNAME)
 		if(EP_${PROJNAME}_URL_HASH)
 			list(APPEND DOWNLOAD_SOURCE URL_HASH ${EP_${PROJNAME}_URL_HASH})
 		endif()
+	elseif(EP_${PROJNAME}_SVN_REPOSITORY)
+		set(DOWNLOAD_SOURCE SVN_REPOSITORY ${EP_${PROJNAME}_SVN_REPOSITORY})
 	else()
 		set(DOWNLOAD_SOURCE GIT_REPOSITORY ${EP_${PROJNAME}_GIT_REPOSITORY} GIT_TAG ${EP_${PROJNAME}_GIT_TAG})
 	endif()
@@ -674,7 +701,7 @@ macro(linphone_builder_add_external_project PROJNAME)
 
 	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/builders/${PROJNAME}/postinstall.cmake)
 		ExternalProject_Add_Step(EP_${PROJNAME} postinstall
-			COMMAND ${CMAKE_COMMAND} -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DINSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -P ${CMAKE_CURRENT_SOURCE_DIR}/builders/${PROJNAME}/postinstall.cmake
+			COMMAND ${CMAKE_COMMAND} -DTOOLCHAIN_RANLIB=${TOOLCHAIN_RANLIB} -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DINSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -P ${CMAKE_CURRENT_SOURCE_DIR}/builders/${PROJNAME}/postinstall.cmake
 			COMMENT "Performing post-installation for 'EP_${PROJNAME}'"
 			DEPENDEES install
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -857,4 +884,18 @@ macro(linphone_builder_add_dummy_libraries_generation)
 			CMAKE_ARGS ${LINPHONE_BUILDER_EP_ARGS} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DLINPHONE_BUILDER_DUMMY_LIBRARIES=${LINPHONE_BUILDER_DUMMY_LIBRARIES}
 		)
 	endif()
+endmacro()
+
+macro(linphone_builder_add_cmake_option BUILDER_NAME OPTION)
+	string(REGEX MATCH "^-D(.+)=(.*)$" _match "${OPTION}")
+	if(_match)
+		set(_varname ${CMAKE_MATCH_1})
+		foreach(_option ${EP_${BUILDER_NAME}_CMAKE_OPTIONS})
+			string(REGEX MATCH "^-D${_varname}=(.*)$" _match2 "${_option}")
+			if(_match2)
+				list(REMOVE_ITEM EP_${BUILDER_NAME}_CMAKE_OPTIONS ${_option})
+			endif()
+		endforeach()
+	endif()
+	list(APPEND EP_${BUILDER_NAME}_CMAKE_OPTIONS ${OPTION})
 endmacro()

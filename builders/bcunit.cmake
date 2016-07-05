@@ -1,5 +1,5 @@
 ############################################################################
-# bcg729.cmake
+# bcunit.cmake
 # Copyright (C) 2014  Belledonne Communications, Grenoble France
 #
 ############################################################################
@@ -20,11 +20,15 @@
 #
 ############################################################################
 
-set(EP_bcg729_GIT_REPOSITORY "git://git.linphone.org/bcg729.git" CACHE STRING "bcg729 repository URL")
-set(EP_bcg729_GIT_TAG_LATEST "master" CACHE STRING "bcg729 tag to use when compiling latest version")
-set(EP_bcg729_GIT_TAG "1.0.1" CACHE STRING "bcg729 tag to use")
-set(EP_bcg729_EXTERNAL_SOURCE_PATHS "bcg729")
-set(EP_bcg729_GROUPABLE YES)
+set(EP_bcunit_GIT_REPOSITORY "git://git.linphone.org/bcunit.git" CACHE STRING "bcunit repository URL")
+set(EP_bcunit_GIT_TAG_LATEST "linphone" CACHE STRING "bcunit tag to use when compiling latest version")
+set(EP_bcunit_GIT_TAG "0a0a9c60f5a1b899ae26b705fa5224ef25377982" CACHE STRING "bcunit tag to use")
+set(EP_bcunit_EXTERNAL_SOURCE_PATHS "bcunit")
+set(EP_bcunit_IGNORE_WARNINGS TRUE)
 
-set(EP_bcg729_LINKING_TYPE ${DEFAULT_VALUE_CMAKE_LINKING_TYPE})
-set(EP_bcg729_DEPENDENCIES EP_ms2)
+set(EP_bcunit_LINKING_TYPE ${DEFAULT_VALUE_CMAKE_LINKING_TYPE})
+if(MSVC)
+	set(EP_bcunit_EXTRA_LDFLAGS "/SAFESEH:NO")
+endif()
+
+set(EP_bcunit_CMAKE_OPTIONS "-DENABLE_AUTOMATED=YES" "-DENABLE_CONSOLE=NO")

@@ -56,7 +56,6 @@ ms2_add_option("Non free codecs" "Allow inclusion of non-free codecs in the buil
 #security options
 ms2_add_option("SRTP" "SRTP media encryption support." "${DEFAULT_VALUE_ENABLE_SRTP}")
 ms2_add_dependent_option("ZRTP" "ZRTP media encryption support." "${DEFAULT_VALUE_ENABLE_ZRTP}" "ENABLE_SRTP" OFF)
-ms2_add_dependent_option("DTLS" "DTLS media encryption support." "${DEFAULT_VALUE_ENABLE_DTLS}" "ENABLE_SRTP" OFF)
 
 #audio options and codecs
 ms2_add_option("WebRTC AEC" "WebRTC echo canceller support." "${DEFAULT_VALUE_ENABLE_WEBRTC_AEC}")
@@ -66,7 +65,9 @@ ms2_add_strict_dependent_option("AMRWB" "AMR wide-band audio encoding/decoding s
 if(ENABLE_AMRNB OR ENABLE_AMRWB)
 	set(ENABLE_AMR ON CACHE BOOL "" FORCE)
 endif()
+ms2_add_option("Codec2" "Codec2 audio encoding/decoding support." "${DEFAULT_VALUE_ENABLE_CODEC2}")
 ms2_add_strict_dependent_option("G729" "G.729 audio encoding/decoding support (require license)." OFF ON OFF "ENABLE_NON_FREE_CODECS" "non free codecs option not enabled (ENABLE_NON_FREE_CODECS).")
+ms2_add_strict_dependent_option("G729B CNG" "G.729 annex B confort noise generation (require license)." OFF ON OFF "ENABLE_NON_FREE_CODECS" "non free codecs option not enabled (ENABLE_NON_FREE_CODECS).")
 ms2_add_option("GSM"  "GSM audio encoding/decoding support." "${DEFAULT_VALUE_ENABLE_GSM}")
 ms2_add_option("iLBC"  "iLBC audio encoding/decoding support." "${DEFAULT_VALUE_ENABLE_ILBC}")
 ms2_add_option("ISAC"  "ISAC audio encoding/decoding support." "${DEFAULT_VALUE_ENABLE_ISAC}")
@@ -87,7 +88,7 @@ ms2_add_strict_dependent_option("H263p" "H263+ video encoding/decoding support (
 ms2_add_option("MKV" "MKV playing and recording support." "${DEFAULT_VALUE_ENABLE_MKV}")
 ms2_add_strict_dependent_option("MPEG4" "MPEG4 video encoding/decoding support (require license)." OFF "ENABLE_FFMPEG" OFF "ENABLE_NON_FREE_CODECS" "non free codecs option not enabled (ENABLE_NON_FREE_CODECS).")
 ms2_add_strict_dependent_option("OpenH264" "H.264 video encoding/decoding support with the openh264 library (require license)." OFF "ENABLE_VIDEO" OFF "ENABLE_NON_FREE_CODECS" "non free codecs option not enabled (ENABLE_NON_FREE_CODECS).")
-ms2_add_dependent_option("V4L" "V4L camera driver." ON "ENABLE_VIDEO; UNIX; NOT APPLE; NOT QNX" OFF)
+ms2_add_dependent_option("V4L" "V4L camera driver." ON "ENABLE_VIDEO;UNIX;NOT APPLE;NOT QNX;NOT ANDROID" OFF)
 ms2_add_dependent_option("VPX" "VPX (VP8) video encoding/decoding support." "${DEFAULT_VALUE_ENABLE_VPX}" "ENABLE_VIDEO" OFF)
 ms2_add_strict_dependent_option("X264" "H.264 video encoding support with the x264 library (require license)." OFF "ENABLE_VIDEO;ENABLE_GPL_THIRD_PARTIES" OFF "ENABLE_NON_FREE_CODECS" "non free codecs option not enabled (ENABLE_NON_FREE_CODECS).")
 

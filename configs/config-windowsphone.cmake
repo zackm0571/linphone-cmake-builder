@@ -24,6 +24,7 @@
 set(DEFAULT_VALUE_ENABLE_VIDEO ON)
 set(DEFAULT_VALUE_ENABLE_SRTP ON)
 set(DEFAULT_VALUE_ENABLE_GSM ON)
+set(DEFAULT_VALUE_ENABLE_POLARSSL ON)
 set(DEFAULT_VALUE_ENABLE_SPEEX ON)
 set(DEFAULT_VALUE_ENABLE_WASAPI ON)
 set(DEFAULT_VALUE_ENABLE_WEBRTC_AEC ON)
@@ -40,23 +41,20 @@ include(builders/CMakeLists.txt)
 
 
 # linphone
-list(APPEND EP_linphone_CMAKE_OPTIONS
-	"-DENABLE_RELATIVE_PREFIX=YES"
-	"-DENABLE_CONSOLE_UI=NO"
-	"-DENABLE_GTK_UI=NO"
-	"-DENABLE_NOTIFY=NO"
-	"-DENABLE_TOOLS=NO"
-	"-DENABLE_TUTORIALS=NO"
-	"-DENABLE_UNIT_TESTS=NO"
-	"-DENABLE_UPNP=NO"
-)
+linphone_builder_add_cmake_option(linphone "-DENABLE_RELATIVE_PREFIX=YES")
+linphone_builder_add_cmake_option(linphone "-DENABLE_CONSOLE_UI=NO")
+linphone_builder_add_cmake_option(linphone "-DENABLE_DAEMON=NO")
+linphone_builder_add_cmake_option(linphone "-DENABLE_GTK_UI=NO")
+linphone_builder_add_cmake_option(linphone "-DENABLE_NOTIFY=NO")
+linphone_builder_add_cmake_option(linphone "-DENABLE_TOOLS=NO")
+linphone_builder_add_cmake_option(linphone "-DENABLE_TUTORIALS=NO")
+linphone_builder_add_cmake_option(linphone "-DENABLE_UNIT_TESTS=NO")
+linphone_builder_add_cmake_option(linphone "-DENABLE_UPNP=NO")
 
 # ms2
-list(APPEND EP_ms2_CMAKE_OPTIONS
-	"-DENABLE_RELATIVE_PREFIX=YES"
-	"-DENABLE_UNIT_TESTS=NO"
-	"-DENABLE_TOOLS=NO"
-)
+linphone_builder_add_cmake_option(ms2 "-DENABLE_RELATIVE_PREFIX=YES")
+linphone_builder_add_cmake_option(ms2 "-DENABLE_UNIT_TESTS=NO")
+linphone_builder_add_cmake_option(ms2 "-DENABLE_TOOLS=NO")
 
 # vpx
 set(EP_vpx_LINKING_TYPE "--enable-static" "--disable-shared" "--enable-pic")

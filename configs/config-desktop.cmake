@@ -21,35 +21,40 @@
 ############################################################################
 
 # Define default values for the linphone builder options
-set(DEFAULT_VALUE_ENABLE_DTLS ON)
+set(DEFAULT_VALUE_ENABLE_BV16 ON)
 set(DEFAULT_VALUE_ENABLE_FFMPEG ON)
 set(DEFAULT_VALUE_ENABLE_GPL_THIRD_PARTIES ON)
 set(DEFAULT_VALUE_ENABLE_GSM ON)
+set(DEFAULT_VALUE_ENABLE_MBEDTLS ON)
+set(DEFAULT_VALUE_ENABLE_MKV ON)
 set(DEFAULT_VALUE_ENABLE_OPUS ON)
 set(DEFAULT_VALUE_ENABLE_SPEEX ON)
-set(DEFAULT_VALUE_ENABLE_BV16 ON)
 set(DEFAULT_VALUE_ENABLE_SRTP ON)
 set(DEFAULT_VALUE_ENABLE_UNIT_TESTS ON)
+set(DEFAULT_VALUE_ENABLE_VCARD ON)
 set(DEFAULT_VALUE_ENABLE_VIDEO ON)
 set(DEFAULT_VALUE_ENABLE_VPX ON)
 set(DEFAULT_VALUE_ENABLE_WASAPI ON)
 set(DEFAULT_VALUE_ENABLE_ZRTP ON)
-set(DEFAULT_VALUE_ENABLE_MKV ON)
-set(DEFAULT_VALUE_CMAKE_LINKING_TYPE "-DENABLE_STATIC=NO")
 
+set(DEFAULT_VALUE_CMAKE_LINKING_TYPE "-DENABLE_STATIC=NO")
 
 # Global configuration
 set(LINPHONE_BUILDER_HOST "")
 if(APPLE)
-	if (NOT CMAKE_OSX_DEPLOYMENT_TARGET) #is it still useful?
+	if(NOT CMAKE_OSX_DEPLOYMENT_TARGET) #is it still useful?
 		#without instruction chose to target lower version between current machine and current used SDK
 		execute_process(COMMAND sw_vers -productVersion  COMMAND awk -F \\. "{printf \"%i.%i\",$1,$2}"  RESULT_VARIABLE sw_vers_version OUTPUT_VARIABLE CURRENT_OSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 		execute_process(COMMAND xcrun --sdk macosx --show-sdk-version RESULT_VARIABLE xcrun_sdk_version OUTPUT_VARIABLE CURRENT_SDK_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
-		if (${CURRENT_OSX_VERSION} VERSION_LESS ${CURRENT_SDK_VERSION})
+		if(${CURRENT_OSX_VERSION} VERSION_LESS ${CURRENT_SDK_VERSION})
 			set(CMAKE_OSX_DEPLOYMENT_TARGET ${CURRENT_OSX_VERSION})
 		else()
 			set(CMAKE_OSX_DEPLOYMENT_TARGET ${CURRENT_SDK_VERSION})
 		endif()
+	endif()
+	if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "10.8")
+		# Resolve conflict between c++ libraries when building C++11 libraries on Mac OS X 10.7
+		set(LINPHONE_BUILDER_CXXFLAGS "-stdlib=libc++")
 	endif()
 
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -62,7 +67,10 @@ if(APPLE)
 	set(CMAKE_MACOSX_RPATH 1)
 endif()
 if(WIN32)
-	set(LINPHONE_BUILDER_CPPFLAGS "-D_WIN32_WINNT=0x0501 -D_ALLOW_KEYWORD_MACROS")
+	set(LINPHONE_BUILDER_CPPFLAGS "-D_WIN32_WINNT=0x0600 -D_CRT_SECURE_NO_WARNINGS -D_WINSOCK_DEPRECATED_NO_WARNINGS")
+	if(MSVC AND MSVC_VERSION GREATER 1600) # Visual Studio 2010 defines this macro itself
+		set(LINPHONE_BUILDER_CPPFLAGS "${LINPHONE_BUILDER_CPPFLAGS} -D_ALLOW_KEYWORD_MACROS")
+	endif()
 endif()
 
 # Adjust PKG_CONFIG_PATH to include install directory
@@ -88,16 +96,16 @@ include(builders/CMakeLists.txt)
 
 # linphone
 if(WIN32)
-	list(APPEND EP_linphone_CMAKE_OPTIONS "-DENABLE_RELATIVE_PREFIX=YES")
-else(APPLE)
-	list(APPEND EP_linphone_CMAKE_OPTIONS "-DENABLE_RELATIVE_PREFIX=${ENABLE_RELATIVE_PREFIX}")
+	linphone_builder_add_cmake_option(linphone "-DENABLE_RELATIVE_PREFIX=YES")
+else()
+	linphone_builder_add_cmake_option(linphone "-DENABLE_RELATIVE_PREFIX=${ENABLE_RELATIVE_PREFIX}")
 endif()
 
 # ms2
 if(WIN32)
-	list(APPEND EP_ms2_CMAKE_OPTIONS "-DENABLE_RELATIVE_PREFIX=YES")
-else(APPLE)
-	list(APPEND EP_ms2_CMAKE_OPTIONS "-DENABLE_RELATIVE_PREFIX=${ENABLE_RELATIVE_PREFIX}")
+	linphone_builder_add_cmake_option(ms2 "-DENABLE_RELATIVE_PREFIX=YES")
+else()
+	linphone_builder_add_cmake_option(ms2 "-DENABLE_RELATIVE_PREFIX=${ENABLE_RELATIVE_PREFIX}")
 endif()
 
 # opencoreamr
@@ -144,48 +152,5 @@ if(MSVC)
 endif()
 
 
-# Create a shortcut to linphone.exe in install prefix
-if(LINPHONE_BUILDER_TARGET STREQUAL linphone AND WIN32)
-	set(SHORTCUT_PATH "${CMAKE_INSTALL_PREFIX}/linphone.lnk")
-	set(SHORTCUT_TARGET_PATH "${CMAKE_INSTALL_PREFIX}/bin/linphone.exe")
-	set(SHORTCUT_WORKING_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
-	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/configs/desktop/linphone_package/winshortcut.vbs.in" "${CMAKE_CURRENT_BINARY_DIR}/winshortcut.vbs" @ONLY)
-	add_custom_command(OUTPUT "${SHORTCUT_PATH}"
-		COMMAND "cscript" "${CMAKE_CURRENT_BINARY_DIR}/winshortcut.vbs"
-	)
-	add_custom_target(linphone_winshortcut ALL DEPENDS "${SHORTCUT_PATH}" TARGET_linphone_builder)
-endif()
-
-
-# Packaging
-if(ENABLE_PACKAGING)
-	if(LINPHONE_BUILDER_TARGET STREQUAL linphone)
-		# Linphone and linphone SDK packages
-		linphone_builder_apply_flags()
-		linphone_builder_set_ep_directories(linphone_package)
-		linphone_builder_expand_external_project_vars()
-		ExternalProject_Add(TARGET_linphone_package
-			DEPENDS TARGET_linphone_builder
-			TMP_DIR ${ep_tmp}
-			BINARY_DIR ${ep_build}
-			SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/desktop/linphone_package"
-			DOWNLOAD_COMMAND ""
-			CMAKE_GENERATOR ${CMAKE_GENERATOR}
-			CMAKE_ARGS ${LINPHONE_BUILDER_EP_ARGS} -DCMAKE_INSTALL_PREFIX=${LINPHONE_BUILDER_WORK_DIR}/PACKAGE -DTOOLS_DIR=${CMAKE_BINARY_DIR}/programs -DLINPHONE_OUTPUT_DIR=${CMAKE_INSTALL_PREFIX} -DLINPHONE_SOURCE_DIR=${EP_linphone_SOURCE_DIR} -DENABLE_ZRTP:BOOL=${ENABLE_ZRTP} -DENABLE_OPENH264:BOOL=${ENABLE_OPENH264} -DOPENH264_VERSION=${EP_openh264_VERSION}
-		)
-	elseif((LINPHONE_BUILDER_TARGET STREQUAL ms2) OR (LINPHONE_BUILDER_TARGET STREQUAL ms2-plugins))
-		# Mediastreamer SDK packages
-		linphone_builder_apply_flags()
-		linphone_builder_set_ep_directories(ms2_package)
-		linphone_builder_expand_external_project_vars()
-		ExternalProject_Add(TARGET_ms2_package
-			DEPENDS TARGET_linphone_builder
-			TMP_DIR ${ep_tmp}
-			BINARY_DIR ${ep_build}
-			SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/desktop/ms2_package"
-			DOWNLOAD_COMMAND ""
-			CMAKE_GENERATOR ${CMAKE_GENERATOR}
-			CMAKE_ARGS ${LINPHONE_BUILDER_EP_ARGS} -DCMAKE_INSTALL_PREFIX=${LINPHONE_BUILDER_WORK_DIR}/PACKAGE -DLINPHONE_OUTPUT_DIR=${CMAKE_INSTALL_PREFIX} -DMS2_SOURCE_DIR=${EP_ms2_SOURCE_DIR} -DENABLE_ZRTP:BOOL=${ENABLE_ZRTP}
-		)
-	endif()
-endif()
+# Add config step for packaging
+set(LINPHONE_BUILDER_ADDITIONAL_CONFIG_STEPS "${CMAKE_CURRENT_LIST_DIR}/desktop/additional_steps.cmake")

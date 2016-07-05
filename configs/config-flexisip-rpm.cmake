@@ -94,12 +94,18 @@ endif()
 
 # needed *before* the include
 set(EP_ortp_FORCE_AUTOTOOLS True)
+linphone_builder_add_cmake_option(ms2 "-DENABLE_TESTS=NO")
+set(EP_ms2_USE_AUTOGEN True)
+set(EP_ms2_FORCE_AUTOTOOLS True)
+set(EP_ms2_CONFIGURE_OPTIONS "--disable-video")
 #required to use autotools
 set(EP_bellesip_USE_AUTOGEN True)
 set(EP_flexisip_FORCE_AUTOTOOLS True)
 
 # we can override the bctoolbox build method before including builders because it doesn't define it.
 set(EP_bctoolbox_BUILD_METHOD "rpm")
+linphone_builder_add_cmake_option(bctoolbox "-DENABLE_TESTS=NO")
+linphone_builder_add_cmake_option(bctoolbox "-DENABLE_TESTS_COMPONENT=NO")
 
 # Include builders
 include(builders/CMakeLists.txt)
@@ -111,21 +117,30 @@ set(EP_bellesip_BUILD_METHOD "rpm")
 set(EP_sofiasip_BUILD_METHOD "rpm")
 set(EP_flexisip_BUILD_METHOD "rpm")
 set(EP_odb_BUILD_METHOD      "custom")
+set(EP_ms2_BUILD_METHOD "rpm")
 
+set(EP_ms2_SPEC_PREFIX     "${RPM_INSTALL_PREFIX}")
 set(EP_ortp_SPEC_PREFIX     "${RPM_INSTALL_PREFIX}")
 set(EP_bellesip_SPEC_PREFIX "${RPM_INSTALL_PREFIX}")
 set(EP_sofiasip_SPEC_PREFIX "${RPM_INSTALL_PREFIX}")
 set(EP_flexisip_SPEC_PREFIX "${RPM_INSTALL_PREFIX}")
 
-set(EP_flexisip_CONFIGURE_OPTIONS "--disable-transcoder" "--enable-redis" "--enable-libodb=no" "--enable-libodb-mysql=no")
+set(EP_flexisip_CONFIGURE_OPTIONS "--enable-redis" "--enable-libodb=no" "--enable-libodb-mysql=no")
 
 
-set(EP_ortp_RPMBUILD_OPTIONS      "--with bc --without srtp")
+set(EP_ortp_RPMBUILD_OPTIONS      "--with bc")
+set(EP_ms2_RPMBUILD_OPTIONS       "--with bc --without video")
 set(EP_unixodbc_RPMBUILD_OPTIONS  "--with bc")
 set(EP_myodbc_RPMBUILD_OPTIONS    "--with bc")
 set(EP_sofiasip_RPMBUILD_OPTIONS  "--with bc --without glib")
 set(EP_hiredis_RPMBUILD_OPTIONS   "--with bc" )
-set(EP_flexisip_RPMBUILD_OPTIONS  "--with bc --without transcoder --without boostlog --with push")
+if (ENABLE_TRANSCODER)
+	set(EP_flexisip_RPMBUILD_OPTIONS  "--with bc --with push")
+else()
+	list(APPEND EP_flexisip_CONFIGURE_OPTIONS "--disable-transcoder")
+	set(EP_flexisip_RPMBUILD_OPTIONS  "--with bc --without transcoder --with push")
+endif()
+
 set(EP_bellesip_RPMBUILD_OPTIONS  "--with bc ")
 
 if (ENABLE_PRESENCE)
@@ -136,6 +151,11 @@ endif()
 if (ENABLE_SOCI)
 	set(EP_flexisip_RPMBUILD_OPTIONS "${EP_flexisip_RPMBUILD_OPTIONS} --with soci")
 	list(APPEND EP_flexisip_CONFIGURE_OPTIONS "--enable-soci")
+endif()
+
+if (ENABLE_SNMP)
+	set(EP_flexisip_RPMBUILD_OPTIONS "${EP_flexisip_RPMBUILD_OPTIONS} --with snmp")
+	list(APPEND EP_flexisip_CONFIGURE_OPTIONS "--enable-snmp")
 endif()
 
 if(ENABLE_BC_ODBC)
@@ -167,16 +187,11 @@ if(PLATFORM STREQUAL "Debian")
 	# some debians are using dash as shell, which doesn't support "export -n", so we override and use bash
 	set(RPMBUILD_OPTIONS "${RPMBUILD_OPTIONS} --define '_buildshell /bin/bash'")
 
-	# boost is to be found from debian's multiarch lib dirs
-	find_package(Boost REQUIRED COMPONENTS system)
-	list(APPEND EP_flexisip_CONFIGURE_OPTIONS "--with-boost-libdir=${Boost_LIBRARY_DIRS}")
-	set(EP_flexisip_RPMBUILD_OPTIONS "${EP_flexisip_RPMBUILD_OPTIONS} --define 'boostlibdir ${Boost_LIBRARY_DIRS}'")
-
 	# redis for debian 7 will be installed in the prefix, but we have to pass it through a special flag to the RPM build, since there
 	# is no pkgconfig
 	list(APPEND EP_flexisip_DEPENDENCIES EP_hiredis)
 	list(APPEND EP_flexisip_CONFIGURE_OPTIONS "--with-redis=${CMAKE_INSTALL_PREFIX}")
-	set(EP_flexisip_RPMBUILD_OPTIONS "${EP_flexisip_RPMBUILD_OPTIONS} --define 'hiredisdir ${RPM_INSTALL_PREFIX}'")	
+	set(EP_flexisip_RPMBUILD_OPTIONS "${EP_flexisip_RPMBUILD_OPTIONS} --define 'hiredisdir ${RPM_INSTALL_PREFIX}'")
 
 	CHECK_PROGRAM(alien)
 	CHECK_PROGRAM(fakeroot)

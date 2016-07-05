@@ -40,14 +40,17 @@ else()
 		set(EP_ffmpeg_PATCH_OPTIONS "--binary")
 	endif()
 
-	set(EP_ffmpeg_URL "http://ffmpeg.org/releases/ffmpeg-0.10.2.tar.gz")
-	set(EP_ffmpeg_URL_HASH "MD5=f449c9fb925e80c457e82187e6c20910")
+	set(EP_ffmpeg_GIT_REPOSITORY "git://git.linphone.org/ffmpeg.git" CACHE STRING "ffmpeg repository URL")
+	set(EP_ffmpeg_GIT_TAG_LATEST "bc" CACHE STRING "ffmpeg tag to use when compiling latest version")
+	set(EP_ffmpeg_GIT_TAG "51aa587f7ddac63c831d73eb360e246765a2675f" CACHE STRING "ffmpeg tag to use")
 	set(EP_ffmpeg_EXTERNAL_SOURCE_PATHS "externals/ffmpeg")
+	set(EP_ffmpeg_MAY_BE_FOUND_ON_SYSTEM TRUE)
+	set(EP_ffmpeg_IGNORE_WARNINGS TRUE)
 	set(EP_ffmpeg_BUILD_METHOD "autotools")
 	set(EP_ffmpeg_CONFIGURE_OPTIONS
+		"--disable-doc"
 		"--disable-zlib"
 		"--disable-bzlib"
-		"--disable-mmx"
 		"--disable-ffplay"
 		"--disable-ffprobe"
 		"--disable-ffserver"
@@ -92,7 +95,7 @@ else()
 		set(EP_ffmpeg_ARCH "i386")
 		set(EP_ffmpeg_EXTRA_CFLAGS "-include windows.h")
 		set(EP_ffmpeg_EXTRA_LDFLAGS "-static-libgcc")
-		set(EP_ffmpeg_PATCH_COMMAND ${EP_ffmpeg_PATCH_COMMAND} "COMMAND" "${PATCH_PROGRAM}" "-p1" "-i" "${CMAKE_CURRENT_SOURCE_DIR}/builders/ffmpeg/mingw-no-lib.patch" ${EP_ffmpeg_PATCH_OPTIONS})
+		list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS "--enable-runtime-cpudetect")
 	else()
 		if(APPLE)
 			set(EP_ffmpeg_TARGET_OS "darwin")
@@ -100,6 +103,7 @@ else()
 				list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS
 					"--enable-decoder=h264"
 					"--disable-iconv"
+					"--disable-mmx"
 					"--enable-cross-compile"
 					"--cross-prefix=${SDK_BIN_PATH}/"
 					"--sysroot=${CMAKE_OSX_SYSROOT}"
@@ -115,13 +119,34 @@ else()
 				endif()
 			else()
 				list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS
-                                        "--sysroot=${CMAKE_OSX_SYSROOT}"
-                                )
-				set(EP_ffmpeg_PATCH_COMMAND ${EP_ffmpeg_PATCH_COMMAND} "COMMAND" "${PATCH_PROGRAM}" "-p1" "-i" "${CMAKE_CURRENT_SOURCE_DIR}/builders/ffmpeg/configure-osx.patch" ${EP_ffmpeg_PATCH_OPTIONS})
+					"--enable-runtime-cpudetect"
+					"--sysroot=${CMAKE_OSX_SYSROOT}"
+				)
+			endif()
+		elseif(ANDROID)
+			list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS
+				"--enable-decoder=h264"
+				"--disable-iconv"
+				"--disable-mmx"
+				"--enable-cross-compile"
+				"--cross-prefix=${TOOLCHAIN_PATH}/"
+				"--sysroot=${CMAKE_SYSROOT}"
+			)
+			set(EP_ffmpeg_TARGET_OS "linux")
+			set(EP_ffmpeg_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+			set(EP_ffmpeg_MAKE_OPTIONS "RANLIB=\"\$RANLIB\"")
+			if(CMAKE_SYSTEM_PROCESSOR STREQUAL "armeabi-v7a")
+				list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS "--enable-neon" "--cpu=cortex-a8" "--disable-armv5te" "--enable-armv6" "--enable-armv6t2")
+			else()
+				list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS "--disable-mmx" "--disable-sse2" "--disable-ssse3")
+			endif()
+			if(CMAKE_C_COMPILER_TARGET) # When building with clang
+				list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS "--extra-cflags=--target=${CMAKE_C_COMPILER_TARGET} --gcc-toolchain=${EXTERNAL_TOOLCHAIN_PATH}/..")
+				list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS "--extra-ldflags=--target=${CMAKE_C_COMPILER_TARGET} --gcc-toolchain=${EXTERNAL_TOOLCHAIN_PATH}/..")
 			endif()
 		else()
 			set(EP_ffmpeg_TARGET_OS "linux")
-			set(EP_ffmpeg_PATCH_COMMAND "${PATCH_PROGRAM}" "-p1" "-i" "${CMAKE_CURRENT_SOURCE_DIR}/builders/ffmpeg/no-sdl.patch" ${EP_ffmpeg_PATCH_OPTIONS})
+			list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS "--enable-runtime-cpudetect")
 		endif()
 		list(APPEND EP_ffmpeg_CONFIGURE_OPTIONS "--cc=$CC")
 	endif()
