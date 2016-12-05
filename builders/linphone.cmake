@@ -20,9 +20,9 @@
 #
 ############################################################################
 
-set(EP_linphone_GIT_REPOSITORY "git://git.linphone.org/linphone.git" CACHE STRING "linphone repository URL")
-set(EP_linphone_GIT_TAG_LATEST "PUC-12-05-16-2.2.1-release" CACHE STRING "linphone tag to use when compiling latest version")
-set(EP_linphone_GIT_TAG "3.10.0" CACHE STRING "linphone tag to use")
+set(EP_linphone_GIT_REPOSITORY "git://github.com/VTCSecureLLC/linphone-cmake-builder.git" CACHE STRING "linphone repository URL")
+set(EP_linphone_GIT_TAG_LATEST "master" CACHE STRING "linphone tag to use when compiling latest version")
+set(EP_linphone_GIT_TAG "3.9.1" CACHE STRING "linphone tag to use")
 set(EP_linphone_EXTERNAL_SOURCE_PATHS "linphone")
 set(EP_linphone_GROUPABLE YES)
 
